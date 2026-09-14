@@ -1,0 +1,48 @@
+{
+  "status": "issue_reproduced",
+  "calls": [
+    {
+      "args": [],
+      "kwargs": {
+        "current_t": 0,
+        "step_size": 15
+      },
+      "status": 0,
+      "fmu_time_after": 15.0
+    },
+    {
+      "args": [],
+      "kwargs": {
+        "current_t": 0,
+        "step_size": 15
+      },
+      "status": 0,
+      "fmu_time_after": 15.0
+    },
+    {
+      "args": [],
+      "kwargs": {
+        "current_t": 0,
+        "step_size": 15
+      },
+      "status": 0,
+      "fmu_time_after": 15.0
+    }
+  ],
+  "states": [
+    {
+      "env_current_time": 0.0,
+      "fmu_time": 15.0
+    },
+    {
+      "env_current_time": 0.0,
+      "fmu_time": 15.0
+    },
+    {
+      "env_current_time": 0.0,
+      "fmu_time": 15.0
+    }
+  ],
+  "exception": null,
+  "finding": "Check whether the wrapper repeats current_t while the FMU advances or reports failure; the wrapper does not validate do_step status."
+}

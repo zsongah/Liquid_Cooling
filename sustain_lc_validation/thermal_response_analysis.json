@@ -1,0 +1,450 @@
+{
+  "experiments": {
+    "hold": {
+      "g1_sec_return_C": {
+        "label_zh": "CDU二次回液温度",
+        "limit_cycle": null,
+        "detrended": {
+          "stdev_K": 0.0504,
+          "p95_abs_dev_K": 0.0914,
+          "trend_per_hour_K": 13.0397
+        }
+      },
+      "g1_chan1_T_C": {
+        "label_zh": "机柜冷板通道1液温",
+        "limit_cycle": null,
+        "detrended": {
+          "stdev_K": 0.0511,
+          "p95_abs_dev_K": 0.0961,
+          "trend_per_hour_K": 12.8712
+        }
+      },
+      "g1_node1_K": {
+        "label_zh": "机柜等效热节点温度",
+        "limit_cycle": null,
+        "detrended": {
+          "stdev_K": 0.0511,
+          "p95_abs_dev_K": 0.0961,
+          "trend_per_hour_K": 12.8712
+        }
+      },
+      "g1_sec_supply_C": {
+        "label_zh": "CDU二次供液温度",
+        "limit_cycle": null,
+        "detrended": {
+          "stdev_K": 0.0507,
+          "p95_abs_dev_K": 0.0949,
+          "trend_per_hour_K": 12.6659
+        }
+      },
+      "g1_prim_return_C": {
+        "label_zh": "CDU一次回液温度",
+        "limit_cycle": null,
+        "detrended": {
+          "stdev_K": 0.0492,
+          "p95_abs_dev_K": 0.0896,
+          "trend_per_hour_K": 12.9881
+        }
+      }
+    },
+    "step": {
+      "g1_sec_return_C": {
+        "label_zh": "CDU二次回液温度",
+        "limit_cycle": {
+          "period_s": 1515.0,
+          "half_periods_s": [
+            690.0,
+            735.0,
+            780.0,
+            810.0
+          ],
+          "p95_amplitude_K": 1.4554,
+          "peak_to_peak_K": 2.6898,
+          "zero_crossings": 5,
+          "mean_K": 38.7728
+        },
+        "detrended": {
+          "stdev_K": 0.593,
+          "p95_abs_dev_K": 1.2237,
+          "trend_per_hour_K": 10.0416
+        }
+      },
+      "g1_chan1_T_C": {
+        "label_zh": "机柜冷板通道1液温",
+        "limit_cycle": {
+          "period_s": 1515.0,
+          "half_periods_s": [
+            690.0,
+            735.0,
+            780.0,
+            810.0
+          ],
+          "p95_amplitude_K": 1.3354,
+          "peak_to_peak_K": 2.6989,
+          "zero_crossings": 5,
+          "mean_K": 312.0146
+        },
+        "detrended": {
+          "stdev_K": 0.5874,
+          "p95_abs_dev_K": 1.2034,
+          "trend_per_hour_K": 9.1459
+        }
+      },
+      "g1_node1_K": {
+        "label_zh": "机柜等效热节点温度",
+        "limit_cycle": {
+          "period_s": 1515.0,
+          "half_periods_s": [
+            690.0,
+            735.0,
+            780.0,
+            810.0
+          ],
+          "p95_amplitude_K": 1.3354,
+          "peak_to_peak_K": 2.6989,
+          "zero_crossings": 5,
+          "mean_K": 312.0146
+        },
+        "detrended": {
+          "stdev_K": 0.5874,
+          "p95_abs_dev_K": 1.2034,
+          "trend_per_hour_K": 9.1459
+        }
+      },
+      "g1_sec_supply_C": {
+        "label_zh": "CDU二次供液温度",
+        "limit_cycle": {
+          "period_s": 1515.0,
+          "half_periods_s": [
+            690.0,
+            735.0,
+            780.0,
+            810.0
+          ],
+          "p95_amplitude_K": 1.1903,
+          "peak_to_peak_K": 2.6922,
+          "zero_crossings": 5,
+          "mean_K": 30.115
+        },
+        "detrended": {
+          "stdev_K": 0.5758,
+          "p95_abs_dev_K": 1.173,
+          "trend_per_hour_K": 8.4311
+        }
+      },
+      "g1_prim_return_C": {
+        "label_zh": "CDU一次回液温度",
+        "limit_cycle": {
+          "period_s": 1515.0,
+          "half_periods_s": [
+            690.0,
+            735.0,
+            780.0,
+            825.0
+          ],
+          "p95_amplitude_K": 1.6461,
+          "peak_to_peak_K": 3.4266,
+          "zero_crossings": 5,
+          "mean_K": 38.126
+        },
+        "detrended": {
+          "stdev_K": 0.7506,
+          "p95_abs_dev_K": 1.5413,
+          "trend_per_hour_K": 8.5725
+        }
+      }
+    }
+  },
+  "channels": {
+    "g1_sec_return_C": {
+      "label_zh": "CDU二次回液温度",
+      "role_zh": "被控回路主要热惯性输出",
+      "envelope_fit": {
+        "x_before_K": 37.126,
+        "x_after_K": 38.8841,
+        "delta_K": 1.7581,
+        "tau_s": 1341.2,
+        "tau_band_s": [
+          447.1,
+          1973.0
+        ],
+        "n_blocks_used": 11,
+        "block_s": 150.0,
+        "t50_s": 367.5,
+        "t63_s": 367.5,
+        "t90_s": 517.5,
+        "peak_slope_per_s": 0.00422492,
+        "peak_slope_at_s": 367.5,
+        "tau_from_peak_slope_s": 149.6,
+        "t90_over_t63": 1.408,
+        "first_order_consistent": false,
+        "tau_band_overall_s": [
+          149.6,
+          1341.2
+        ],
+        "tau_consensus_s": 447.9
+      }
+    },
+    "g1_chan1_T_C": {
+      "label_zh": "机柜冷板通道1液温",
+      "role_zh": "最靠近热源的热质量",
+      "envelope_fit": {
+        "x_before_K": 310.3791,
+        "x_after_K": 312.1298,
+        "delta_K": 1.7507,
+        "tau_s": 1288.1,
+        "tau_band_s": [
+          606.9,
+          1932.1
+        ],
+        "n_blocks_used": 11,
+        "block_s": 150.0,
+        "t50_s": 367.5,
+        "t63_s": 367.5,
+        "t90_s": 367.5,
+        "peak_slope_per_s": 0.00429635,
+        "peak_slope_at_s": 217.5,
+        "tau_from_peak_slope_s": 147.1,
+        "t90_over_t63": 1.0,
+        "first_order_consistent": false,
+        "tau_band_overall_s": [
+          147.1,
+          1288.1
+        ],
+        "tau_consensus_s": 435.3
+      }
+    },
+    "g1_node1_K": {
+      "label_zh": "机柜等效热节点温度",
+      "role_zh": "等效热容节点",
+      "envelope_fit": {
+        "x_before_K": 310.3791,
+        "x_after_K": 312.1298,
+        "delta_K": 1.7507,
+        "tau_s": 1288.1,
+        "tau_band_s": [
+          606.9,
+          1932.1
+        ],
+        "n_blocks_used": 11,
+        "block_s": 150.0,
+        "t50_s": 367.5,
+        "t63_s": 367.5,
+        "t90_s": 367.5,
+        "peak_slope_per_s": 0.00429635,
+        "peak_slope_at_s": 217.5,
+        "tau_from_peak_slope_s": 147.1,
+        "t90_over_t63": 1.0,
+        "first_order_consistent": false,
+        "tau_band_overall_s": [
+          147.1,
+          1288.1
+        ],
+        "tau_consensus_s": 435.3
+      }
+    },
+    "g1_sec_supply_C": {
+      "label_zh": "CDU二次供液温度",
+      "role_zh": "执行响应（设定值跟踪）",
+      "envelope_fit": {
+        "x_before_K": 28.5186,
+        "x_after_K": 30.2343,
+        "delta_K": 1.7157,
+        "tau_s": 1035.2,
+        "tau_band_s": [
+          675.7,
+          2114.5
+        ],
+        "n_blocks_used": 11,
+        "block_s": 150.0,
+        "t50_s": 367.5,
+        "t63_s": 367.5,
+        "t90_s": 367.5,
+        "peak_slope_per_s": 0.00472265,
+        "peak_slope_at_s": 217.5,
+        "tau_from_peak_slope_s": 133.8,
+        "t90_over_t63": 1.0,
+        "first_order_consistent": false,
+        "tau_band_overall_s": [
+          133.8,
+          1035.2
+        ],
+        "tau_consensus_s": 372.2
+      }
+    },
+    "g1_prim_return_C": {
+      "label_zh": "CDU一次回液温度",
+      "role_zh": "一次侧耦合",
+      "envelope_fit": {
+        "x_before_K": 36.1184,
+        "x_after_K": 38.1829,
+        "delta_K": 2.0645,
+        "tau_s": 1408.0,
+        "tau_band_s": [
+          471.0,
+          1964.1
+        ],
+        "n_blocks_used": 10,
+        "block_s": 150.0,
+        "t50_s": 367.5,
+        "t63_s": 367.5,
+        "t90_s": 367.5,
+        "peak_slope_per_s": 0.00449087,
+        "peak_slope_at_s": 217.5,
+        "tau_from_peak_slope_s": 140.8,
+        "t90_over_t63": 1.0,
+        "first_order_consistent": false,
+        "tau_band_overall_s": [
+          140.8,
+          1408.0
+        ],
+        "tau_consensus_s": 445.2
+      }
+    }
+  },
+  "coupled_groups": [
+    {
+      "channel": "g2_sec_return_C",
+      "label_zh": "第2组二次回液温度",
+      "envelope_fit": {
+        "x_before_K": 37.1022,
+        "x_after_K": 37.9043,
+        "delta_K": 0.802,
+        "tau_s": 1608.1,
+        "tau_band_s": [
+          1197.1,
+          2175.1
+        ],
+        "n_blocks_used": 18,
+        "block_s": 150.0,
+        "t50_s": 1267.5,
+        "t63_s": 1717.5,
+        "t90_s": 2767.5,
+        "peak_slope_per_s": 0.00056147,
+        "peak_slope_at_s": 667.5,
+        "tau_from_peak_slope_s": 1125.8,
+        "t90_over_t63": 1.611,
+        "first_order_consistent": true,
+        "tau_band_overall_s": [
+          1125.8,
+          1717.5
+        ],
+        "tau_consensus_s": 1390.5
+      },
+      "gain_vs_g1": 0.4562
+    },
+    {
+      "channel": "g3_sec_return_C",
+      "label_zh": "第3组二次回液温度",
+      "envelope_fit": {
+        "x_before_K": 37.1022,
+        "x_after_K": 37.9043,
+        "delta_K": 0.802,
+        "tau_s": 1608.1,
+        "tau_band_s": [
+          1197.1,
+          2175.1
+        ],
+        "n_blocks_used": 18,
+        "block_s": 150.0,
+        "t50_s": 1267.5,
+        "t63_s": 1717.5,
+        "t90_s": 2767.5,
+        "peak_slope_per_s": 0.00056147,
+        "peak_slope_at_s": 667.5,
+        "tau_from_peak_slope_s": 1125.8,
+        "t90_over_t63": 1.611,
+        "first_order_consistent": true,
+        "tau_band_overall_s": [
+          1125.8,
+          1717.5
+        ],
+        "tau_consensus_s": 1390.5
+      },
+      "gain_vs_g1": 0.4562
+    },
+    {
+      "channel": "g4_sec_return_C",
+      "label_zh": "第4组二次回液温度",
+      "envelope_fit": {
+        "x_before_K": 37.1022,
+        "x_after_K": 37.9043,
+        "delta_K": 0.802,
+        "tau_s": 1608.1,
+        "tau_band_s": [
+          1197.1,
+          2175.1
+        ],
+        "n_blocks_used": 18,
+        "block_s": 150.0,
+        "t50_s": 1267.5,
+        "t63_s": 1717.5,
+        "t90_s": 2767.5,
+        "peak_slope_per_s": 0.00056147,
+        "peak_slope_at_s": 667.5,
+        "tau_from_peak_slope_s": 1125.8,
+        "t90_over_t63": 1.611,
+        "first_order_consistent": true,
+        "tau_band_overall_s": [
+          1125.8,
+          1717.5
+        ],
+        "tau_consensus_s": 1390.5
+      },
+      "gain_vs_g1": 0.4562
+    },
+    {
+      "channel": "g5_sec_return_C",
+      "label_zh": "第5组二次回液温度",
+      "envelope_fit": {
+        "x_before_K": 37.1022,
+        "x_after_K": 37.9043,
+        "delta_K": 0.802,
+        "tau_s": 1608.1,
+        "tau_band_s": [
+          1197.1,
+          2175.1
+        ],
+        "n_blocks_used": 18,
+        "block_s": 150.0,
+        "t50_s": 1267.5,
+        "t63_s": 1717.5,
+        "t90_s": 2767.5,
+        "peak_slope_per_s": 0.00056147,
+        "peak_slope_at_s": 667.5,
+        "tau_from_peak_slope_s": 1125.8,
+        "t90_over_t63": 1.611,
+        "first_order_consistent": true,
+        "tau_band_overall_s": [
+          1125.8,
+          1717.5
+        ],
+        "tau_consensus_s": 1390.5
+      },
+      "gain_vs_g1": 0.4562
+    }
+  ],
+  "verdict": {
+    "basis": "g1_sec_return_C",
+    "dc_gain": 0.879,
+    "t50_s": 367.5,
+    "t63_s": 367.5,
+    "t90_s": 517.5,
+    "tau_s": 1341.2,
+    "tau_band_overall_s": [
+      149.6,
+      1341.2
+    ],
+    "first_order_consistent": false,
+    "t90_over_t63": 1.408,
+    "supervisory_5_30s_over_t90": [
+      0.00966,
+      0.05797
+    ],
+    "oscillation_is_intrinsic": true,
+    "oscillation_hold": 0.0504,
+    "oscillation_step": 0.593,
+    "cycle_judgement": "回路整体阶跃响应 t90 ≈ 518 s（分钟量级）。5–30 s 监督层刷新相对热过程接近准稳态，监督层周期在物理上充分；不需要为实现秒级闭环而进入设备控制层的专用硬件。",
+    "oscillation_judgement": "振荡只在设定值阶跃后出现、在设定值恒定时不存在，因此它是 CDU 内环在设定值变化后的调节振荡（极限环），不是对象自身的固有脉动。含义：监督层下发的每一个设定值变化都可能激起分钟级振荡，故 (a) 动作幅度与速率应受限，(b) 效果评价必须用足够长的时间平均窗，不能以单点温度为准。"
+  }
+}

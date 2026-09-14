@@ -1,0 +1,48 @@
+standard_point,tag,causality,variability,unit,declared_mapping_unit,description,start,min,max
+cdu.sec_supply_temp_sp,simulator_1_datacenter_1_computeBlock_1_cdu_1_sources_Tsec_supply_nom_RL,input,continuous,,degC,,28.0,,
+cdu.sec_supply_temp_sp,simulator_1_datacenter_1_computeBlock_2_cdu_1_sources_Tsec_supply_nom_RL,input,continuous,,degC,,28.0,,
+cdu.sec_supply_temp_sp,simulator_1_datacenter_1_computeBlock_3_cdu_1_sources_Tsec_supply_nom_RL,input,continuous,,degC,,28.0,,
+cdu.sec_supply_temp_sp,simulator_1_datacenter_1_computeBlock_4_cdu_1_sources_Tsec_supply_nom_RL,input,continuous,,degC,,28.0,,
+cdu.sec_supply_temp_sp,simulator_1_datacenter_1_computeBlock_5_cdu_1_sources_Tsec_supply_nom_RL,input,continuous,,degC,,28.0,,
+cdu.dp_sp,simulator_1_datacenter_1_computeBlock_1_cdu_1_sources_dp_nom_RL,input,continuous,,kPa,,27.5,,
+cdu.dp_sp,simulator_1_datacenter_1_computeBlock_2_cdu_1_sources_dp_nom_RL,input,continuous,,kPa,,27.5,,
+cdu.dp_sp,simulator_1_datacenter_1_computeBlock_3_cdu_1_sources_dp_nom_RL,input,continuous,,kPa,,27.5,,
+cdu.dp_sp,simulator_1_datacenter_1_computeBlock_4_cdu_1_sources_dp_nom_RL,input,continuous,,kPa,,27.5,,
+cdu.dp_sp,simulator_1_datacenter_1_computeBlock_5_cdu_1_sources_dp_nom_RL,input,continuous,,kPa,,27.5,,
+cabinet.branch_valve,simulator_1_datacenter_1_computeBlock_1_cabinet_1_sources_Valve_Stpts[1],input,continuous,,1,,0.33,0.0,1.0
+cabinet.branch_valve,simulator_1_datacenter_1_computeBlock_1_cabinet_1_sources_Valve_Stpts[2],input,continuous,,1,,0.33,0.0,1.0
+cabinet.branch_valve,simulator_1_datacenter_1_computeBlock_1_cabinet_1_sources_Valve_Stpts[3],input,continuous,,1,,0.34,0.0,1.0
+cabinet.branch_valve,simulator_1_datacenter_1_computeBlock_2_cabinet_1_sources_Valve_Stpts[1],input,continuous,,1,,0.33,0.0,1.0
+cabinet.branch_valve,simulator_1_datacenter_1_computeBlock_2_cabinet_1_sources_Valve_Stpts[2],input,continuous,,1,,0.33,0.0,1.0
+cabinet.branch_valve,simulator_1_datacenter_1_computeBlock_2_cabinet_1_sources_Valve_Stpts[3],input,continuous,,1,,0.34,0.0,1.0
+cabinet.branch_valve,simulator_1_datacenter_1_computeBlock_3_cabinet_1_sources_Valve_Stpts[1],input,continuous,,1,,0.33,0.0,1.0
+cabinet.branch_valve,simulator_1_datacenter_1_computeBlock_3_cabinet_1_sources_Valve_Stpts[2],input,continuous,,1,,0.33,0.0,1.0
+cabinet.branch_valve,simulator_1_datacenter_1_computeBlock_3_cabinet_1_sources_Valve_Stpts[3],input,continuous,,1,,0.34,0.0,1.0
+cabinet.branch_valve,simulator_1_datacenter_1_computeBlock_4_cabinet_1_sources_Valve_Stpts[1],input,continuous,,1,,0.33,0.0,1.0
+cabinet.branch_valve,simulator_1_datacenter_1_computeBlock_4_cabinet_1_sources_Valve_Stpts[2],input,continuous,,1,,0.33,0.0,1.0
+cabinet.branch_valve,simulator_1_datacenter_1_computeBlock_4_cabinet_1_sources_Valve_Stpts[3],input,continuous,,1,,0.34,0.0,1.0
+cabinet.branch_valve,simulator_1_datacenter_1_computeBlock_5_cabinet_1_sources_Valve_Stpts[1],input,continuous,,1,,0.33,0.0,1.0
+cabinet.branch_valve,simulator_1_datacenter_1_computeBlock_5_cabinet_1_sources_Valve_Stpts[2],input,continuous,,1,,0.33,0.0,1.0
+cabinet.branch_valve,simulator_1_datacenter_1_computeBlock_5_cabinet_1_sources_Valve_Stpts[3],input,continuous,,1,,0.34,0.0,1.0
+plant.ct_water_temp_sp,simulator_1_centralEnergyPlant_1_coolingTowerLoop_1_sources_CT_RL_stpt,input,continuous,,K,,293.15,0.0,
+plant.ctwp_speed_rel,simulator[1].centralEnergyPlant[1].coolingTowerLoop[1].controlBus.Nrel_CTWP[1],local,continuous,,1,,,,
+plant.htwp_speed_rel,simulator[1].centralEnergyPlant[1].hotWaterLoop[1].controlBus.Nrel_HTWP[1],local,continuous,,1,,,,
+plant.htwp_speed_rel,simulator[1].centralEnergyPlant[1].hotWaterLoop[1].controlBus.Nrel_HTWP[2],local,continuous,,1,,,,
+plant.htwp_speed_rel,simulator[1].centralEnergyPlant[1].hotWaterLoop[1].controlBus.Nrel_HTWP[3],local,continuous,,1,,,,
+plant.htwp_speed_rel,simulator[1].centralEnergyPlant[1].hotWaterLoop[1].controlBus.Nrel_HTWP[4],local,continuous,,1,,,,
+plant.ehx_valve,simulator[1].centralEnergyPlant[1].hotWaterLoop[1].controlBus.valveEHX[1],local,continuous,,1,"=1: completely open, =0: completely closed",,,
+plant.ehx_valve,simulator[1].centralEnergyPlant[1].hotWaterLoop[1].controlBus.valveEHX[2],local,continuous,,1,"=1: completely open, =0: completely closed",,,
+plant.ehx_valve,simulator[1].centralEnergyPlant[1].hotWaterLoop[1].controlBus.valveEHX[3],local,continuous,,1,"=1: completely open, =0: completely closed",,,
+plant.ehx_valve,simulator[1].centralEnergyPlant[1].hotWaterLoop[1].controlBus.valveEHX[4],local,continuous,,1,"=1: completely open, =0: completely closed",,,
+plant.ehx_bypass_valve,simulator[1].centralEnergyPlant[1].hotWaterLoop[1].controlBus.valveEHXb[1],local,continuous,,1,"=1: completely open, =0: completely closed",,,
+plant.ehx_bypass_valve,simulator[1].centralEnergyPlant[1].hotWaterLoop[1].controlBus.valveEHXb[2],local,continuous,,1,"=1: completely open, =0: completely closed",,,
+plant.ehx_bypass_valve,simulator[1].centralEnergyPlant[1].hotWaterLoop[1].controlBus.valveEHXb[3],local,continuous,,1,"=1: completely open, =0: completely closed",,,
+plant.ehx_bypass_valve,simulator[1].centralEnergyPlant[1].hotWaterLoop[1].controlBus.valveEHXb[4],local,continuous,,1,"=1: completely open, =0: completely closed",,,
+plant.htwp_valve,simulator[1].centralEnergyPlant[1].hotWaterLoop[1].controlBus.valveHTWP[1],local,continuous,,1,"=1: completely open, =0: completely closed",,,
+plant.htwp_valve,simulator[1].centralEnergyPlant[1].hotWaterLoop[1].controlBus.valveHTWP[2],local,continuous,,1,"=1: completely open, =0: completely closed",,,
+plant.htwp_valve,simulator[1].centralEnergyPlant[1].hotWaterLoop[1].controlBus.valveHTWP[3],local,continuous,,1,"=1: completely open, =0: completely closed",,,
+plant.htwp_valve,simulator[1].centralEnergyPlant[1].hotWaterLoop[1].controlBus.valveHTWP[4],local,continuous,,1,"=1: completely open, =0: completely closed",,,
+plant.ct_valve,"simulator[1].centralEnergyPlant[1].coolingTowerLoop[1].controlBus.valve_CT[1,1]",local,continuous,,1,"=1: completely open, =0: completely closed",,,
+plant.ct_valve,"simulator[1].centralEnergyPlant[1].coolingTowerLoop[1].controlBus.valve_CT[1,2]",local,continuous,,1,"=1: completely open, =0: completely closed",,,
+plant.ctwp_valve,simulator[1].centralEnergyPlant[1].coolingTowerLoop[1].controlBus.valve_CTWP[1],local,continuous,,1,"=1: completely open, =0: completely closed",,,
+datacenter.bypass_valve,simulator[1].datacenter[1].controlBus.opening_bypass,local,continuous,,1,"=1: completely open, =0: completely closed",,0.0,1.0

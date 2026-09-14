@@ -1,0 +1,65 @@
+{
+  "mode": "baseline_repeat",
+  "status": "passed",
+  "steps": 60,
+  "simulated_seconds": 900.0,
+  "elapsed_wall_s": 1.0640698340000085,
+  "fmi_statuses": [
+    0
+  ],
+  "point_map": {
+    "cdu1_supply_K": "simulator[1].datacenter[1].computeBlock[1].cdu[1].summary.T_sec_s",
+    "cdu1_return_K": "simulator[1].datacenter[1].computeBlock[1].cdu[1].summary.T_sec_r",
+    "cdu1_mass_flow_kg_s": "simulator[1].datacenter[1].computeBlock[1].cdu[1].summary.m_flow_sec",
+    "branch1_mass_flow_kg_s": "simulator[1].datacenter[1].computeBlock[1].cabinet[1].valveLinear_1.m_flow",
+    "branch2_mass_flow_kg_s": "simulator[1].datacenter[1].computeBlock[1].cabinet[1].valveLinear_2.m_flow",
+    "branch3_mass_flow_kg_s": "simulator[1].datacenter[1].computeBlock[1].cabinet[1].valveLinear_3.m_flow",
+    "thermal_node1_K": "simulator[1].datacenter[1].computeBlock[1].cabinet[1].boundary_1.port.T",
+    "cdu1_pump_summary_W": "simulator[1].datacenter[1].computeBlock[1].cdu[1].summary.W_flow_CDUP",
+    "tower_cell1_fan_W": "simulator[1].centralEnergyPlant[1].coolingTowerLoop[1].coolingTower[1].cell[1].CT.PFan"
+  },
+  "missing_points": {
+    "cdu1_pump_electric_W": "simulator[1].datacenter[1].computeBlock[1].cdu[1].CDUP.P"
+  },
+  "conditions": "Synthetic: 15 heat inputs at 60 kW; wet bulb 20 C; tower target wet bulb + 50/9 K; CDU target 28 C; differential-pressure input 27.5; direct valve commands 0.33/0.33/0.34. Optional CDU1 supply target 30 C from t=600 s.",
+  "first": {
+    "time_s": 15.0,
+    "cdu1_supply_setpoint_C": 28.0,
+    "cdu1_supply_K": 340.71631463032793,
+    "cdu1_return_K": 450.93591014491375,
+    "cdu1_mass_flow_kg_s": 12.34953080638661,
+    "branch1_mass_flow_kg_s": 1.4640182909825816,
+    "branch2_mass_flow_kg_s": 1.4642358661327237,
+    "branch3_mass_flow_kg_s": 1.502135856144873,
+    "thermal_node1_K": 361.10593472573163,
+    "cdu1_pump_summary_W": 4335.645726995543,
+    "tower_cell1_fan_W": 0.0
+  },
+  "before_step": {
+    "time_s": 600.0,
+    "cdu1_supply_setpoint_C": 28.0,
+    "cdu1_supply_K": 301.16107197714655,
+    "cdu1_return_K": 309.21998815349343,
+    "cdu1_mass_flow_kg_s": 12.482742016436532,
+    "branch1_mass_flow_kg_s": 1.3748776783774497,
+    "branch2_mass_flow_kg_s": 1.3748775911193494,
+    "branch3_mass_flow_kg_s": 1.410456379507553,
+    "thermal_node1_K": 309.5204315153818,
+    "cdu1_pump_summary_W": 3500.6872998836916,
+    "tower_cell1_fan_W": 4804.013014166277
+  },
+  "last": {
+    "time_s": 900.0,
+    "cdu1_supply_setpoint_C": 28.0,
+    "cdu1_supply_K": 301.19798134479004,
+    "cdu1_return_K": 310.30786335971015,
+    "cdu1_mass_flow_kg_s": 12.402656956692226,
+    "branch1_mass_flow_kg_s": 1.3665370599402746,
+    "branch2_mass_flow_kg_s": 1.366537114801986,
+    "branch3_mass_flow_kg_s": 1.4019000196196825,
+    "thermal_node1_K": 310.1165901171927,
+    "cdu1_pump_summary_W": 3461.0952035177033,
+    "tower_cell1_fan_W": 9983.03776136992
+  },
+  "limits": "Load and commands are illustrative. This is load/step/readability verification, not validated thermal safety or energy savings."
+}

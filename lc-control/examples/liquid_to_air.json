@@ -1,0 +1,112 @@
+{
+  "schema_version": "0.1",
+  "scene_id": "example-liquid_to_air",
+  "topology_version": "example-1",
+  "provenance": "illustrative_not_site_data",
+  "notes": [
+    "All limits are synthetic test-fixture values, not OEM or industry safety limits.",
+    "CDU control mode is a profile property, not inherent to liquid-to-liquid or liquid-to-air hardware."
+  ],
+  "assets": [
+    {
+      "id": "SINK_01",
+      "kind": "room_air"
+    },
+    {
+      "id": "CDU_01",
+      "kind": "cdu"
+    },
+    {
+      "id": "RACK_01",
+      "kind": "rack"
+    },
+    {
+      "id": "RACK_02",
+      "kind": "rack"
+    }
+  ],
+  "control_domains": [
+    {
+      "id": "CDU_DOMAIN_01",
+      "cdu_id": "CDU_01",
+      "owner": "lc-core",
+      "heat_sink_id": "SINK_01",
+      "served_racks": [
+        "RACK_01",
+        "RACK_02"
+      ],
+      "shared_hydraulics": false
+    }
+  ],
+  "devices": {
+    "CDU_01": {
+      "type": "liquid_to_air",
+      "adapter": "mock",
+      "evidence": "illustrative_not_oem",
+      "initial_mode": "temperature_flow",
+      "max_data_age_s": 10,
+      "controls": {
+        "cdu.sec_supply_temp_sp": {
+          "unit": "degC",
+          "minimum": 20,
+          "maximum": 40,
+          "max_step": 2,
+          "minimum_interval_s": 5,
+          "allowed_modes": [
+            "temperature_flow"
+          ]
+        },
+        "cdu.sec_flow_sp": {
+          "unit": "kg/s",
+          "minimum": 1,
+          "maximum": 5,
+          "max_step": 0.5,
+          "minimum_interval_s": 5,
+          "allowed_modes": [
+            "temperature_flow"
+          ]
+        }
+      },
+      "initial_setpoints": {
+        "cdu.sec_supply_temp_sp": 28,
+        "cdu.sec_flow_sp": 2.0
+      },
+      "initial_observations": {
+        "cdu.sec_supply_temp": {
+          "value": 301.15,
+          "unit": "K"
+        },
+        "cdu.sec_return_temp": {
+          "value": 309.15,
+          "unit": "K"
+        },
+        "cdu.sec_flow": {
+          "value": 2,
+          "unit": "kg/s"
+        },
+        "cdu.sec_dp": {
+          "value": 27.5,
+          "unit": "kPa"
+        }
+      },
+      "guards": {
+        "cdu.sec_supply_temp": {
+          "unit": "K",
+          "minimum": 293.15,
+          "maximum": 313.15
+        },
+        "cdu.sec_flow": {
+          "unit": "kg/s",
+          "minimum": 0.5,
+          "maximum": 6
+        },
+        "cdu.sec_dp": {
+          "unit": "kPa",
+          "minimum": 10,
+          "maximum": 60
+        }
+      }
+    }
+  },
+  "extensions": {}
+}

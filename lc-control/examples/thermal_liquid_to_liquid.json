@@ -1,0 +1,157 @@
+{
+  "schema_version": "0.1",
+  "scene_id": "example-liquid_to_liquid",
+  "topology_version": "example-1",
+  "provenance": "illustrative_not_site_data",
+  "notes": [
+    "All limits are synthetic test-fixture values, not OEM or industry safety limits.",
+    "CDU control mode is a profile property, not inherent to liquid-to-liquid or liquid-to-air hardware."
+  ],
+  "assets": [
+    {
+      "id": "SINK_01",
+      "kind": "facility_water"
+    },
+    {
+      "id": "CDU_01",
+      "kind": "cdu"
+    },
+    {
+      "id": "RACK_01",
+      "kind": "rack"
+    },
+    {
+      "id": "RACK_02",
+      "kind": "rack"
+    }
+  ],
+  "control_domains": [
+    {
+      "id": "CDU_DOMAIN_01",
+      "cdu_id": "CDU_01",
+      "owner": "lc-core",
+      "heat_sink_id": "SINK_01",
+      "served_racks": [
+        "RACK_01",
+        "RACK_02"
+      ],
+      "shared_hydraulics": false
+    }
+  ],
+  "devices": {
+    "CDU_01": {
+      "type": "liquid_to_liquid",
+      "adapter": "thermal_sim",
+      "evidence": "illustrative_not_oem",
+      "initial_mode": "temperature_dp",
+      "max_data_age_s": 10,
+      "controls": {
+        "cdu.sec_supply_temp_sp": {
+          "unit": "degC",
+          "minimum": 20,
+          "maximum": 40,
+          "max_step": 2,
+          "minimum_interval_s": 5,
+          "allowed_modes": [
+            "temperature_dp"
+          ]
+        },
+        "cdu.dp_sp": {
+          "unit": "kPa",
+          "minimum": 15,
+          "maximum": 50,
+          "max_step": 5,
+          "minimum_interval_s": 5,
+          "allowed_modes": [
+            "temperature_dp"
+          ]
+        }
+      },
+      "initial_setpoints": {
+        "cdu.sec_supply_temp_sp": 28,
+        "cdu.dp_sp": 40
+      },
+      "initial_observations": {
+        "cdu.sec_supply_temp": {
+          "value": 301.15,
+          "unit": "K"
+        },
+        "cdu.sec_return_temp": {
+          "value": 306.83,
+          "unit": "K"
+        },
+        "cdu.sec_flow": {
+          "value": 3.16,
+          "unit": "kg/s"
+        },
+        "cdu.sec_dp": {
+          "value": 40,
+          "unit": "kPa"
+        },
+        "cdu.liquid_load": {
+          "unit": "W_th",
+          "value": 75000
+        },
+        "cdu.electric_power": {
+          "unit": "W_e",
+          "value": 250
+        }
+      },
+      "guards": {
+        "cdu.sec_supply_temp": {
+          "unit": "K",
+          "minimum": 293.15,
+          "maximum": 313.15
+        },
+        "cdu.sec_flow": {
+          "unit": "kg/s",
+          "minimum": 0.5,
+          "maximum": 6
+        },
+        "cdu.sec_dp": {
+          "unit": "kPa",
+          "minimum": 10,
+          "maximum": 60
+        },
+        "cdu.sec_return_temp": {
+          "unit": "K",
+          "minimum": 293.15,
+          "maximum": 326.15
+        }
+      },
+      "policy": {
+        "control_quantity": "cdu.dp_sp",
+        "cp_j_kg_k": 4180,
+        "target_delta_k": 8,
+        "minimum_flow_kg_s": 1.8,
+        "maximum_flow_kg_s": 3.5,
+        "return_soft_limit_k": 314.15,
+        "flow_per_sqrt_kpa": 0.43,
+        "gain_bounds": [
+          0.3,
+          0.7
+        ],
+        "thermal_tau_s": 40,
+        "horizon_s": 30,
+        "command_ttl_s": 4,
+        "max_data_age_s": 10,
+        "deadband": 0.1,
+        "max_liquid_load_w": 140000,
+        "adaptive_enabled": true,
+        "feedback_flow_per_k": 0.08
+      },
+      "simulation": {
+        "true_flow_per_sqrt_kpa": 0.5,
+        "cp_j_kg_k": 4050,
+        "density_kg_m3": 1010,
+        "pump_efficiency": 0.65,
+        "pump_idle_w": 60,
+        "pump_tau_s": 4,
+        "supply_tau_s": 12,
+        "return_tau_s": 35,
+        "local_fallback_flow_kg_s": 3.5
+      }
+    }
+  },
+  "extensions": {}
+}

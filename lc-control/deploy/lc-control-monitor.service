@@ -1,0 +1,28 @@
+# Linux 边缘机示例，仅启动监测。完成现场适配前不要改为 control。
+# 使用前先创建 lc-control 系统用户，放置代码和实际 site.json；此文件未安装到当前机器。
+[Unit]
+Description=LC Control CDU monitoring service
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=lc-control
+Group=lc-control
+WorkingDirectory=/opt/lc-control
+Environment=PYTHONDONTWRITEBYTECODE=1
+ExecStart=/opt/lc-control/.venv/bin/python -m lc_control run /etc/lc-control/site.json --mode monitor --steps 0 --interval 5 --output /var/lib/lc-control/site
+StateDirectory=lc-control
+UMask=0077
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/var/lib/lc-control /tmp
+# 不隔离 /tmp：同机的端点锁需要对其他 LC Control 实例可见。
+PrivateTmp=false
+# 联调阶段不自动重启，更不能重启后自动抢回控制权。
+Restart=no
+TimeoutStopSec=45
+
+[Install]
+WantedBy=multi-user.target

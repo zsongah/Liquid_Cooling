@@ -1,0 +1,236 @@
+{
+  "schema_version": "0.1",
+  "scene_id": "UNBOUND-FIELD-TEMPLATE",
+  "topology_version": "example-1",
+  "provenance": "illustrative_not_site_data",
+  "notes": [
+    "UNBOUND TEMPLATE: validation deliberately fails until actual OEM mappings and engineering limits are provided.",
+    "All remaining limits, units, enums, control modes and fluid properties are illustrative and MUST be checked for the target device."
+  ],
+  "assets": [
+    {
+      "id": "SINK_01",
+      "kind": "facility_water"
+    },
+    {
+      "id": "CDU_01",
+      "kind": "cdu"
+    },
+    {
+      "id": "RACK_01",
+      "kind": "rack"
+    },
+    {
+      "id": "RACK_02",
+      "kind": "rack"
+    }
+  ],
+  "control_domains": [
+    {
+      "id": "CDU_DOMAIN_01",
+      "cdu_id": "CDU_01",
+      "owner": "lc-core",
+      "heat_sink_id": "SINK_01",
+      "served_racks": [
+        "RACK_01",
+        "RACK_02"
+      ],
+      "shared_hydraulics": false
+    }
+  ],
+  "devices": {
+    "CDU_01": {
+      "type": "liquid_to_liquid",
+      "adapter": "modbus_tcp",
+      "evidence": "REPLACE_WITH_OEM_MODEL_FIRMWARE_AND_DOCUMENT_REVISION",
+      "max_data_age_s": 10,
+      "controls": {
+        "cdu.sec_supply_temp_sp": {
+          "unit": "degC",
+          "minimum": 20,
+          "maximum": 40,
+          "max_step": 2,
+          "minimum_interval_s": 5,
+          "allowed_modes": [
+            "temperature_dp"
+          ]
+        },
+        "cdu.dp_sp": {
+          "unit": "kPa",
+          "minimum": 15,
+          "maximum": 50,
+          "max_step": 5,
+          "minimum_interval_s": 5,
+          "allowed_modes": [
+            "temperature_dp"
+          ]
+        }
+      },
+      "guards": {
+        "cdu.sec_supply_temp": {
+          "unit": "K",
+          "minimum": 293.15,
+          "maximum": 313.15
+        },
+        "cdu.sec_flow": {
+          "unit": "kg/s",
+          "minimum": 0.5,
+          "maximum": 6
+        },
+        "cdu.sec_dp": {
+          "unit": "kPa",
+          "minimum": 10,
+          "maximum": 60
+        },
+        "cdu.sec_return_temp": {
+          "unit": "K",
+          "minimum": 293.15,
+          "maximum": 326.15
+        }
+      },
+      "policy": {
+        "control_quantity": "cdu.dp_sp",
+        "cp_j_kg_k": 4180,
+        "target_delta_k": 8,
+        "minimum_flow_kg_s": 1.8,
+        "maximum_flow_kg_s": 3.5,
+        "return_soft_limit_k": 314.15,
+        "flow_per_sqrt_kpa": 0.43,
+        "gain_bounds": [
+          0.3,
+          0.7
+        ],
+        "thermal_tau_s": 40,
+        "horizon_s": 30,
+        "command_ttl_s": 4,
+        "max_data_age_s": 10,
+        "deadband": 0.1,
+        "max_liquid_load_w": 140000,
+        "adaptive_enabled": false,
+        "feedback_flow_per_k": 0.08
+      },
+      "write_enabled": false,
+      "connection": {
+        "host": "REPLACE_WITH_DEVICE_ADDRESS",
+        "port": 502,
+        "unit_id": 1,
+        "timeout_s": 0.5
+      },
+      "commissioning": {
+        "point_map_verified": false,
+        "limits_verified": false,
+        "local_fallback_tested": false,
+        "watchdog_tested": false,
+        "exclusive_control_tested": false,
+        "watchdog_timeout_s": null,
+        "evidence_reference": null
+      },
+      "points": {
+        "observations": {
+          "cdu.sec_supply_temp": {
+            "address": null,
+            "read_function": 4,
+            "dtype": "float32",
+            "unit": "K"
+          },
+          "cdu.sec_return_temp": {
+            "address": null,
+            "read_function": 4,
+            "dtype": "float32",
+            "unit": "K"
+          },
+          "cdu.sec_flow": {
+            "address": null,
+            "read_function": 4,
+            "dtype": "float32",
+            "unit": "kg/s"
+          },
+          "cdu.sec_dp": {
+            "address": null,
+            "read_function": 4,
+            "dtype": "float32",
+            "unit": "kPa"
+          },
+          "cdu.liquid_load": {
+            "address": null,
+            "read_function": 4,
+            "dtype": "float32",
+            "unit": "W_th"
+          },
+          "cdu.electric_power": {
+            "address": null,
+            "read_function": 4,
+            "dtype": "float32",
+            "unit": "W_e"
+          }
+        },
+        "setpoints": {
+          "cdu.sec_supply_temp_sp": {
+            "address": null,
+            "read_function": 3,
+            "write_function": 6,
+            "dtype": "uint16",
+            "scale": 0.1,
+            "unit": "degC",
+            "tolerance": 0.051
+          },
+          "cdu.dp_sp": {
+            "address": null,
+            "read_function": 3,
+            "write_function": 6,
+            "dtype": "uint16",
+            "scale": 0.1,
+            "unit": "kPa",
+            "tolerance": 0.051
+          }
+        },
+        "status": {
+          "mode": {
+            "address": null,
+            "read_function": 3,
+            "dtype": "uint16",
+            "unit": "1",
+            "enum": {
+              "0": "local_auto",
+              "1": "temperature_dp"
+            }
+          },
+          "owner": {
+            "address": null,
+            "read_function": 3,
+            "dtype": "uint16",
+            "unit": "1",
+            "enum": {
+              "0": "local",
+              "1": "lc-core"
+            }
+          },
+          "alarm": {
+            "address": null,
+            "read_function": 3,
+            "dtype": "uint16",
+            "unit": "1"
+          }
+        },
+        "commands": {
+          "heartbeat": {
+            "address": null,
+            "read_function": 3,
+            "write_function": 6,
+            "dtype": "uint16",
+            "unit": "1"
+          },
+          "release": {
+            "address": null,
+            "read_function": 3,
+            "write_function": 6,
+            "dtype": "uint16",
+            "unit": "1",
+            "value": 1
+          }
+        }
+      }
+    }
+  },
+  "extensions": {}
+}

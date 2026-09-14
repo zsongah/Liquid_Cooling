@@ -1,0 +1,156 @@
+{
+  "schema_version": "0.1",
+  "scene_id": "SUSTAIN-FMU-FIXED-NEIGHBOR-EXPERIMENT",
+  "topology_version": "sustain-five-groups-single-master-v1",
+  "provenance": "reference_fmu_not_oem_hardware",
+  "notes": [
+    "Laboratory only. One master owns the entire FMU; only group 1 DP is adjusted.",
+    "Other four groups, branch valves, supply targets and tower target remain fixed.",
+    "The source dp input is psi, proven by its internal Pa-to-psi comparator. All standard DP quantities are kPa.",
+    "Reference experiment limits are not OEM limits; startup/warmup is excluded from performance evaluation."
+  ],
+  "assets": [
+    {
+      "id": "FACILITY",
+      "kind": "facility_water"
+    },
+    {
+      "id": "CDU_01",
+      "kind": "cdu"
+    },
+    {
+      "id": "RACK_01",
+      "kind": "rack"
+    }
+  ],
+  "control_domains": [
+    {
+      "id": "FMU_DOMAIN_01",
+      "cdu_id": "CDU_01",
+      "owner": "fmu-laboratory-master",
+      "heat_sink_id": "FACILITY",
+      "served_racks": [
+        "RACK_01"
+      ],
+      "shared_hydraulics": true
+    }
+  ],
+  "devices": {
+    "CDU_01": {
+      "type": "liquid_to_liquid",
+      "adapter": "sustain_fmu",
+      "evidence": "illustrative_not_oem",
+      "initial_mode": "experiment_dp",
+      "max_data_age_s": 20,
+      "controls": {
+        "cdu.dp_sp": {
+          "unit": "kPa",
+          "minimum": 172.368932,
+          "maximum": 262.00077664,
+          "max_step": 3.0,
+          "minimum_interval_s": 60,
+          "allowed_modes": [
+            "experiment_dp"
+          ]
+        }
+      },
+      "initial_setpoints": {
+        "cdu.dp_sp": 189.6058252
+      },
+      "initial_observations": {
+        "cdu.sec_supply_temp": {
+          "value": 301.15,
+          "unit": "K"
+        },
+        "cdu.sec_return_temp": {
+          "value": 310.15,
+          "unit": "K"
+        },
+        "cdu.sec_flow": {
+          "value": 12.3,
+          "unit": "kg/s"
+        },
+        "cdu.sec_dp": {
+          "value": 189.6058252,
+          "unit": "kPa"
+        },
+        "cdu.electric_power": {
+          "value": 3400,
+          "unit": "W_e"
+        }
+      },
+      "guards": {
+        "cdu.sec_supply_temp": {
+          "unit": "K",
+          "minimum": 288.15,
+          "maximum": 318.15
+        },
+        "cdu.sec_return_temp": {
+          "unit": "K",
+          "minimum": 288.15,
+          "maximum": 328.15
+        },
+        "cdu.sec_flow": {
+          "unit": "kg/s",
+          "minimum": 1,
+          "maximum": 30
+        },
+        "cdu.sec_dp": {
+          "unit": "kPa",
+          "minimum": 1,
+          "maximum": 400
+        }
+      },
+      "policy": {
+        "control_quantity": "cdu.dp_sp",
+        "cp_j_kg_k": 4180,
+        "target_delta_k": 8.5,
+        "minimum_flow_kg_s": 8,
+        "maximum_flow_kg_s": 18,
+        "return_soft_limit_k": 315.15,
+        "flow_per_sqrt_kpa": 0.95,
+        "gain_bounds": [
+          0.5,
+          1.5
+        ],
+        "thermal_tau_s": 300,
+        "horizon_s": 60,
+        "command_ttl_s": 15,
+        "max_data_age_s": 20,
+        "deadband": 0.2,
+        "max_liquid_load_w": 2000000,
+        "adaptive_enabled": false,
+        "feedback_flow_per_k": 0.08
+      }
+    }
+  },
+  "extensions": {
+    "sustain_fmu_experiment": {
+      "warmup_s": 3600,
+      "evaluation_s": 3600,
+      "communication_step_s": 15,
+      "control_interval_s": 60,
+      "load_phase_s": 600,
+      "blade_input_profile_w": [
+        60000,
+        75000,
+        50000,
+        65000,
+        80000,
+        60000
+      ],
+      "background_blade_input_w": 60000,
+      "supply_setpoint_degC": 28,
+      "baseline_dp_psi": 27.5,
+      "branch_openings": [
+        0.33,
+        0.33,
+        0.34
+      ],
+      "wet_bulb_k": 293.15,
+      "tower_setpoint_k": 298.7055555555555,
+      "all_group_return_limit_degC": 55,
+      "all_channel_limit_degC": 70
+    }
+  }
+}
