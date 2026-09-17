@@ -1,0 +1,345 @@
+{
+  "schema_version": "0.1",
+  "scene_id": "workbench-two-independent-cdus",
+  "topology_version": "illustrative-independent-v1",
+  "provenance": "illustrative_not_site_data",
+  "notes": [
+    "两个独立控制域：CDU_A 使用液对液压差控制，CDU_B 使用液对气流量控制，分别具有独立热汇边界。",
+    "每个域单独选择后运行同一 Engine；多任务属于独立聚合仿真，没有站级容量、共享冷源或共享二次水路协调。",
+    "此配置仅声明服务与依赖关系，没有现场管路证据，界面不得把连线标为真实水管。",
+    "四个机柜是服务对象清单；合成模型只生成两个独立 CDU 的聚合量，不产生机柜、支路或芯片温度。",
+    "液对气热汇只是边界标签，模型未包含室内空调与风机，不能据此计算全机房能耗。"
+  ],
+  "assets": [
+    {
+      "id": "FWS_A",
+      "kind": "facility_water",
+      "label": "独立一次侧边界 A"
+    },
+    {
+      "id": "ROOM_AIR_B",
+      "kind": "room_air",
+      "label": "独立空气侧边界 B"
+    },
+    {
+      "id": "CDU_A",
+      "kind": "cdu",
+      "label": "CDU A · L2L 压差控制"
+    },
+    {
+      "id": "CDU_B",
+      "kind": "cdu",
+      "label": "CDU B · L2A 流量控制"
+    },
+    {
+      "id": "RACK_A1",
+      "kind": "rack",
+      "label": "A 域机柜 1"
+    },
+    {
+      "id": "RACK_A2",
+      "kind": "rack",
+      "label": "A 域机柜 2"
+    },
+    {
+      "id": "RACK_B1",
+      "kind": "rack",
+      "label": "B 域机柜 1"
+    },
+    {
+      "id": "RACK_B2",
+      "kind": "rack",
+      "label": "B 域机柜 2"
+    }
+  ],
+  "control_domains": [
+    {
+      "id": "DOMAIN_A",
+      "cdu_id": "CDU_A",
+      "owner": "lc-core",
+      "heat_sink_id": "FWS_A",
+      "served_racks": [
+        "RACK_A1",
+        "RACK_A2"
+      ],
+      "shared_hydraulics": false
+    },
+    {
+      "id": "DOMAIN_B",
+      "cdu_id": "CDU_B",
+      "owner": "lc-core",
+      "heat_sink_id": "ROOM_AIR_B",
+      "served_racks": [
+        "RACK_B1",
+        "RACK_B2"
+      ],
+      "shared_hydraulics": false
+    }
+  ],
+  "devices": {
+    "CDU_A": {
+      "type": "liquid_to_liquid",
+      "adapter": "thermal_sim",
+      "evidence": "illustrative_not_oem",
+      "initial_mode": "temperature_dp",
+      "max_data_age_s": 10,
+      "controls": {
+        "cdu.sec_supply_temp_sp": {
+          "unit": "degC",
+          "minimum": 20,
+          "maximum": 40,
+          "max_step": 2,
+          "minimum_interval_s": 5,
+          "allowed_modes": [
+            "temperature_dp"
+          ]
+        },
+        "cdu.dp_sp": {
+          "unit": "kPa",
+          "minimum": 15,
+          "maximum": 50,
+          "max_step": 5,
+          "minimum_interval_s": 5,
+          "allowed_modes": [
+            "temperature_dp"
+          ]
+        }
+      },
+      "initial_setpoints": {
+        "cdu.sec_supply_temp_sp": 28,
+        "cdu.dp_sp": 40
+      },
+      "initial_observations": {
+        "cdu.sec_supply_temp": {
+          "value": 301.15,
+          "unit": "K"
+        },
+        "cdu.sec_return_temp": {
+          "value": 306.83,
+          "unit": "K"
+        },
+        "cdu.sec_flow": {
+          "value": 3.16,
+          "unit": "kg/s"
+        },
+        "cdu.sec_dp": {
+          "value": 40,
+          "unit": "kPa"
+        },
+        "cdu.liquid_load": {
+          "unit": "W_th",
+          "value": 75000
+        },
+        "cdu.electric_power": {
+          "unit": "W_e",
+          "value": 250
+        }
+      },
+      "guards": {
+        "cdu.sec_supply_temp": {
+          "unit": "K",
+          "minimum": 293.15,
+          "maximum": 313.15
+        },
+        "cdu.sec_flow": {
+          "unit": "kg/s",
+          "minimum": 0.5,
+          "maximum": 6
+        },
+        "cdu.sec_dp": {
+          "unit": "kPa",
+          "minimum": 10,
+          "maximum": 60
+        },
+        "cdu.sec_return_temp": {
+          "unit": "K",
+          "minimum": 293.15,
+          "maximum": 326.15
+        }
+      },
+      "policy": {
+        "control_quantity": "cdu.dp_sp",
+        "cp_j_kg_k": 4180,
+        "target_delta_k": 8,
+        "minimum_flow_kg_s": 1.8,
+        "maximum_flow_kg_s": 3.5,
+        "return_soft_limit_k": 314.15,
+        "flow_per_sqrt_kpa": 0.43,
+        "gain_bounds": [
+          0.3,
+          0.7
+        ],
+        "thermal_tau_s": 40,
+        "horizon_s": 30,
+        "command_ttl_s": 4,
+        "max_data_age_s": 10,
+        "deadband": 0.1,
+        "max_liquid_load_w": 140000,
+        "adaptive_enabled": true,
+        "feedback_flow_per_k": 0.08,
+        "kind": "flow"
+      },
+      "simulation": {
+        "true_flow_per_sqrt_kpa": 0.5,
+        "cp_j_kg_k": 4050,
+        "density_kg_m3": 1010,
+        "pump_efficiency": 0.65,
+        "pump_idle_w": 60,
+        "pump_tau_s": 4,
+        "supply_tau_s": 12,
+        "return_tau_s": 35,
+        "local_fallback_flow_kg_s": 3.5
+      }
+    },
+    "CDU_B": {
+      "type": "liquid_to_air",
+      "adapter": "thermal_sim",
+      "evidence": "illustrative_not_oem",
+      "initial_mode": "temperature_flow",
+      "max_data_age_s": 10,
+      "controls": {
+        "cdu.sec_supply_temp_sp": {
+          "unit": "degC",
+          "minimum": 20,
+          "maximum": 40,
+          "max_step": 2,
+          "minimum_interval_s": 5,
+          "allowed_modes": [
+            "temperature_flow"
+          ]
+        },
+        "cdu.sec_flow_sp": {
+          "unit": "kg/s",
+          "minimum": 1,
+          "maximum": 5,
+          "max_step": 0.5,
+          "minimum_interval_s": 5,
+          "allowed_modes": [
+            "temperature_flow"
+          ]
+        }
+      },
+      "initial_setpoints": {
+        "cdu.sec_supply_temp_sp": 28,
+        "cdu.sec_flow_sp": 3.2
+      },
+      "initial_observations": {
+        "cdu.sec_supply_temp": {
+          "value": 301.15,
+          "unit": "K"
+        },
+        "cdu.sec_return_temp": {
+          "value": 306.83,
+          "unit": "K"
+        },
+        "cdu.sec_flow": {
+          "value": 3.16,
+          "unit": "kg/s"
+        },
+        "cdu.sec_dp": {
+          "value": 40,
+          "unit": "kPa"
+        },
+        "cdu.liquid_load": {
+          "unit": "W_th",
+          "value": 75000
+        },
+        "cdu.electric_power": {
+          "unit": "W_e",
+          "value": 250
+        }
+      },
+      "guards": {
+        "cdu.sec_supply_temp": {
+          "unit": "K",
+          "minimum": 293.15,
+          "maximum": 313.15
+        },
+        "cdu.sec_flow": {
+          "unit": "kg/s",
+          "minimum": 0.5,
+          "maximum": 6
+        },
+        "cdu.sec_dp": {
+          "unit": "kPa",
+          "minimum": 10,
+          "maximum": 60
+        },
+        "cdu.sec_return_temp": {
+          "unit": "K",
+          "minimum": 293.15,
+          "maximum": 326.15
+        }
+      },
+      "policy": {
+        "control_quantity": "cdu.sec_flow_sp",
+        "cp_j_kg_k": 4180,
+        "target_delta_k": 8,
+        "minimum_flow_kg_s": 1.8,
+        "maximum_flow_kg_s": 3.5,
+        "return_soft_limit_k": 314.15,
+        "flow_per_sqrt_kpa": 0.43,
+        "gain_bounds": [
+          0.3,
+          0.7
+        ],
+        "thermal_tau_s": 40,
+        "horizon_s": 30,
+        "command_ttl_s": 4,
+        "max_data_age_s": 10,
+        "deadband": 0.02,
+        "max_liquid_load_w": 140000,
+        "adaptive_enabled": true,
+        "feedback_flow_per_k": 0.08,
+        "kind": "flow"
+      },
+      "simulation": {
+        "true_flow_per_sqrt_kpa": 0.5,
+        "cp_j_kg_k": 4050,
+        "density_kg_m3": 1010,
+        "pump_efficiency": 0.65,
+        "pump_idle_w": 60,
+        "pump_tau_s": 4,
+        "supply_tau_s": 12,
+        "return_tau_s": 35,
+        "local_fallback_flow_kg_s": 3.5
+      }
+    }
+  },
+  "extensions": {
+    "ui_layout": {
+      "FWS_A": {
+        "x": 90,
+        "y": 150
+      },
+      "ROOM_AIR_B": {
+        "x": 90,
+        "y": 420
+      },
+      "CDU_A": {
+        "x": 360,
+        "y": 150
+      },
+      "CDU_B": {
+        "x": 360,
+        "y": 420
+      },
+      "RACK_A1": {
+        "x": 760,
+        "y": 80
+      },
+      "RACK_A2": {
+        "x": 760,
+        "y": 220
+      },
+      "RACK_B1": {
+        "x": 760,
+        "y": 350
+      },
+      "RACK_B2": {
+        "x": 760,
+        "y": 490
+      }
+    }
+  }
+}

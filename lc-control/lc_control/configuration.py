@@ -28,6 +28,15 @@ def validate_scene(scene):
         if not condition:
             raise ValueError(reason)
 
+    require(isinstance(scene, dict), "scene_mapping_required")
+    # 所有运行入口和工作台使用相同扩展校验，不让 UI 检查与 CLI 行为分叉。
+    # 包含整个 JSON 的非有限数值检查，NaN 不能藏在画布或模型扩展字段中。
+    from .site import topology_errors
+    try:
+        site_errors = topology_errors(scene)
+    except (KeyError, TypeError, AttributeError):
+        raise ValueError("malformed_topology_structure") from None
+    require(not site_errors, ";".join(site_errors))
     require(scene.get("schema_version") == "0.1", "unsupported_schema_version")
     require(bool(scene.get("topology_version")), "topology_version_required")
     assets = scene.get("assets", [])
@@ -58,13 +67,11 @@ def validate_scene(scene):
         require(all(r in by_id and by_id[r]["kind"] == "rack" for r in racks), "unknown_rack")
         # Shared hydraulic control needs a coordinator beyond this single-domain skeleton.
     for asset_id, device in scene["devices"].items():
-        require(device.get("adapter") in ("mock", "thermal_sim", "modbus_tcp", "sustain_fmu"), "adapter_not_implemented")
-        simulated = device["adapter"] in ("mock", "thermal_sim", "sustain_fmu")
+        from .registry import adapter_metadata, validate_adapter_profile, create_policy
+        simulated = adapter_metadata(device.get("adapter"))["simulation"]
         if simulated:
             require(device.get("evidence") == "illustrative_not_oem", "mock_evidence_required")
-        else:
-            from .modbus import validate_profile
-            validate_profile(device)
+        validate_adapter_profile(device)
         require(isinstance(device.get("controls"), dict), "controls_mapping_required")
         if simulated:
             require(bool(device["controls"]), "controls_required")
@@ -77,7 +84,10 @@ def validate_scene(scene):
             require(finite(capability["max_step"]) and capability["max_step"] > 0, "invalid_max_step")
             interval = capability["minimum_interval_s"]
             require(finite(interval) and interval > 0, "invalid_control_interval")
-            require(bool(capability["allowed_modes"]), "control_modes_required")
+            modes = capability.get("allowed_modes")
+            require(isinstance(modes, list) and bool(modes)
+                    and all(isinstance(mode, str) and bool(mode.strip()) for mode in modes)
+                    and len(modes) == len(set(modes)), "control_modes_required")
             if simulated:
                 initial = device["initial_setpoints"].get(quantity)
                 require(finite(initial) and lo <= initial <= hi, "invalid_initial_setpoint")
@@ -92,8 +102,7 @@ def validate_scene(scene):
             require(finite(guard["minimum"]) and finite(guard["maximum"])
                     and guard["minimum"] < guard["maximum"], "invalid_guard_bounds")
         if "policy" in device:
-            from .policy import FlowPolicy
-            FlowPolicy(device["policy"])
+            create_policy(device["policy"])
             require(device["policy"]["control_quantity"] in device["controls"], "policy_control_not_advertised")
     return scene
 
@@ -105,10 +114,13 @@ def load_scene(path):
 
 def capability_report(scene):
     """生成静态能力概览。能力声明不代表现场验收，更不代表机柜安全已得到保障。"""
+    from .site import inspect_scene
+    inspection = inspect_scene(scene)
+    inspected = {r["domain_id"]: r for r in inspection["capabilities"]}
     reports = []
     for domain in scene["control_domains"]:
         device = scene["devices"][domain["cdu_id"]]
-        reports.append({
+        report = {
             "domain_id": domain["id"],
             "cdu_id": domain["cdu_id"],
             "served_racks": domain["served_racks"],
@@ -122,6 +134,9 @@ def capability_report(scene):
                                     else "unavailable: no policy or shared-domain coordinator required"),
             "hydraulic_solver": "not_implemented",
             "coolant_health_prediction": "not_implemented",
-            "topology_level": "service_and_dependency_relations",
-        })
+            "topology_level": inspection["topology"]["kind"],
+        }
+        # CLI 和工作台共同使用同一能力矩阵；保留历史字段便于已有调用方迁移。
+        report.update(inspected.get(domain["id"], {}))
+        reports.append(report)
     return reports

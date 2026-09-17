@@ -5,6 +5,16 @@ import json
 from pathlib import Path
 
 
+def add_diagnostics_link(output,body):
+    """可选补充分析入口，不改变原实验轨迹、曲线和指标。"""
+    metadata=output/'diagnostics_link.json'
+    if not metadata.exists():return body
+    href=json.loads(metadata.read_text())['href']
+    if not href.startswith('../') or ':' in href:raise ValueError('invalid_local_diagnostics_link')
+    section='<section><h2>新增跟踪诊断</h2><p><a href="'+html.escape(href,quote=True)+'">查看需求流量与实际流量、压差目标与实测对照，以及阶跃实验状态</a></p></section>'
+    return body.replace('</main>',section+'</main>')
+
+
 def build_report(output):
     import matplotlib
     matplotlib.use("Agg")
@@ -18,6 +28,8 @@ def build_report(output):
     for v in variants:
         with (output / v / "trace.csv").open() as file:
             traces[v] = [{k: float(x) for k, x in r.items()} for r in csv.DictReader(file)]
+    policy=json.loads((output/'fixed/scene.json').read_text())['devices']['CDU_01']['policy']
+    exponent=policy.get('hydraulic_model',{}).get('exponent',.5)
     signature = lambda rows: [(r["time_s"], r["blade_input_w"]) for r in rows]
     if any(signature(traces[v]) != signature(traces["baseline"]) for v in variants):
         raise ValueError("comparison_time_or_disturbance_mismatch")
@@ -27,7 +39,7 @@ def build_report(output):
              ("g1_flow_kg_s", "CDU 1 secondary mass flow", "kg/s", 1),
              ("g1_dp_kpa", "CDU 1 measured differential pressure", "kPa", 1),
              ("g1_pump_w", "CDU 1 pump power", "kW", .001),
-             ("gain", "Controller hydraulic gain", "kg/s / sqrt(kPa)", 1)]
+             ("gain", "Controller hydraulic gain", f"kg/s / kPa^{exponent:g}", 1)]
     for ax, (key, title, unit, factor) in zip(axes.flat, specs):
         for v in variants:
             if key == "blade_input_w" and v != "baseline":
@@ -75,5 +87,5 @@ main{max-width:1180px;margin:auto;padding:40px 24px}h1{font-size:32px;line-heigh
 </ul></section><section><h2>运行证据</h2><p>%s</p><p><a href="manifest.json">完整结果与代码哈希</a> · <a href="interface_contract.json">FMU 接口核对</a> · <a href="scene.json">实验配置</a></p><p>每组目录保存 trace.csv、runtime.sqlite、commands.jsonl、fmu_writes.json 和 summary.json，可逐周期检查实际输入和输出。</p></section></main></html>''' % (
         e["warmup_s"] / 60, e["evaluation_s"] / 60, e["communication_step_s"], e["control_interval_s"],
         "".join(rows), negative, links)
-    (output / "index.html").write_text(body, encoding="utf-8")
+    (output / "index.html").write_text(add_diagnostics_link(output,body), encoding="utf-8")
     print(output / "index.html")

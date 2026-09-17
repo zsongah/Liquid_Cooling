@@ -8,8 +8,7 @@ import json
 import time
 from pathlib import Path
 from .engine import EndpointLock, Engine
-from .modbus import ModbusCDUAdapter
-from .plant import ThermalPlant
+from .registry import create_adapter
 from .report import render_report
 
 
@@ -35,7 +34,7 @@ def simulate(scene, output, seconds=1800, interval=5, adaptive=True):
     if profile["adapter"] != "thermal_sim":
         raise ValueError("simulate_requires_thermal_sim_profile")
     profile["policy"]["adaptive_enabled"] = adaptive
-    adapter = ThermalPlant(domain["cdu_id"], profile, domain["owner"])
+    adapter = create_adapter(domain["cdu_id"], profile, domain["owner"])
     engine = Engine(scene, domain["id"], adapter, output, "control")
     energy, load_energy, peak_return, breaches, elapsed = 0, 0, 0, 0, 0
     try:
@@ -72,7 +71,7 @@ def compare(scene, output, seconds=1800, interval=5):
     fixed_model = simulate(scene, output / "fixed_model", seconds, interval, False)
     domain = domain_of(scene)
     profile = scene["devices"][domain["cdu_id"]]
-    baseline = ThermalPlant(domain["cdu_id"], profile, domain["owner"])
+    baseline = create_adapter(domain["cdu_id"], profile, domain["owner"])
     energy, peak, elapsed, breaches = 0, 0, 0, 0
     while elapsed < seconds:
         step = min(interval, seconds - elapsed)
@@ -107,7 +106,7 @@ def run(scene, output, mode="monitor", steps=12, interval=5, domain_id=None, for
         if not isinstance(timeout, (int, float)) or not 0 < interval < timeout / 2:
             raise ValueError("control_interval_must_be_less_than_half_verified_device_watchdog_timeout")
     with EndpointLock(identity), EndpointLock(str(Path(output).resolve())):
-        adapter = ModbusCDUAdapter(domain["cdu_id"], profile, domain["owner"])
+        adapter = create_adapter(domain["cdu_id"], profile, domain["owner"])
         engine = Engine(scene, domain["id"], adapter, output, mode)
         count = 0
         fault_cycles = 0

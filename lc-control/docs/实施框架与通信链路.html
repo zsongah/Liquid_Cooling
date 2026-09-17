@@ -1,0 +1,18 @@
+<!doctype html><html lang="zh-CN"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>AIDC 液冷智控 · 实施框架与通信链路</title><style>
+*{box-sizing:border-box}body{margin:0;background:#f2f6f7;color:#102f43;
+font:16px/1.8 -apple-system,BlinkMacSystemFont,"PingFang SC",sans-serif}
+header,section{max-width:1580px;margin:26px auto;padding:24px 30px;background:white;border-radius:12px}
+h1{font-size:30px;margin:0}h2{font-size:22px;margin:0 0 8px}p{color:#526c7d;margin:8px 0}
+a{color:#087f80;text-underline-offset:4px}nav{display:flex;gap:25px;flex-wrap:wrap}
+img{display:block;width:100%;height:auto;margin-top:20px;border:1px solid #cfdfE5;border-radius:6px}
+.links{display:flex;gap:24px}footer{font-size:13px;color:#526c7d} @media print{header,.links{display:none}
+section{page-break-after:always;margin:0;padding:0}img{border:0} @page{size:A3 landscape;margin:10mm}}
+</style></head><body><header><h1>AIDC 液冷智控：当前实施框架与通信链路</h1>
+<p>软件 v0.6.0 · 核对日期 2026-09-17。图示覆盖本机工作台、配置发布、多独立控制域与功率预测前馈。</p>
+<p>界面通过同源 HTTP 查询记录和管理任务；Engine 调用设备适配器与命令网关。各域独立运行，尚无共享水路调度、支路阀分配或全站能耗优化。</p>
+<p>预测接入与使用契约见完整手册第 8.4 节；当前实现边界见第 13.1 节。Sustain FMU 新实验仍走专用 Master，不由工作台启动。</p>
+<nav><a href="#overview">图 1 · 整体框架</a><a href="#detail">图 2 · 通信与代码</a>
+<a href="边缘液冷智控产品审查与使用手册.html">完整使用手册</a></nav></header>
+<section id="overview"><h2>图 1 · 产品当前实施框架</h2><p>区分上游输入、边缘软件、CDU 本地职责、已用验证载体与后续扩展。</p><div class="links"><a href="assets/aidc-implementation-overview.png" download>下载 PNG 图片</a><a href="assets/aidc-implementation-overview.svg" target="_blank">打开 SVG 矢量图 / 放大</a></div><a href="assets/aidc-implementation-overview.svg" target="_blank"><img src="assets/aidc-implementation-overview.png" alt="图 1 · 产品当前实施框架"></a></section><section id="detail"><h2>图 2 · 工作台、Engine、Adapter、网口与 CDU 的信息链路</h2><p>绿色表示候选与下发，蓝色表示采集与回读。FMU 是另一种载体，不使用现场 Modbus 网络。</p><div class="links"><a href="assets/aidc-control-dataflow.png" download>下载 PNG 图片</a><a href="assets/aidc-control-dataflow.svg" target="_blank">打开 SVG 矢量图 / 放大</a></div><a href="assets/aidc-control-dataflow.svg" target="_blank"><img src="assets/aidc-control-dataflow.png" alt="图 2 · 工作台、Engine、Adapter、网口与 CDU 的信息链路"></a></section></body></html>

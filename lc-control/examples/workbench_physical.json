@@ -1,0 +1,396 @@
+{
+  "schema_version": "0.1",
+  "scene_id": "workbench-physical-single-cdu",
+  "topology_version": "illustrative-physical-v1",
+  "provenance": "illustrative_not_site_data",
+  "notes": [
+    "本场景是可运行的单 CDU 聚合热仿真及物理连接示意，不是厂家点表或真实机房验收记录。",
+    "机柜、节点与分集水器用于拓扑配置展示；只有 CDU 聚合量参与现有模型，不生成各机柜或节点温度、支路流量。",
+    "二次供回管成对声明；CDU 换热器一次与二次回路隔离。机柜内部节点管路未声明，节点只表达资产归属。",
+    "修改拓扑或界面布局不会自动生成新的管网求解器。"
+  ],
+  "assets": [
+    {
+      "id": "SINK_01",
+      "kind": "facility_water",
+      "label": "一次侧冷源边界"
+    },
+    {
+      "id": "CDU_01",
+      "kind": "cdu",
+      "label": "CDU · 聚合仿真"
+    },
+    {
+      "id": "RACK_01",
+      "kind": "rack",
+      "label": "机柜 A"
+    },
+    {
+      "id": "RACK_02",
+      "kind": "rack",
+      "label": "机柜 B"
+    },
+    {
+      "id": "MANIFOLD_01",
+      "kind": "manifold",
+      "label": "二次侧分集水器"
+    },
+    {
+      "id": "RACK_01_NODE_1",
+      "kind": "node",
+      "label": "A 柜节点 1",
+      "parent_id": "RACK_01"
+    },
+    {
+      "id": "RACK_01_NODE_2",
+      "kind": "node",
+      "label": "A 柜节点 2",
+      "parent_id": "RACK_01"
+    },
+    {
+      "id": "RACK_02_NODE_1",
+      "kind": "node",
+      "label": "B 柜节点 1",
+      "parent_id": "RACK_02"
+    },
+    {
+      "id": "RACK_02_NODE_2",
+      "kind": "node",
+      "label": "B 柜节点 2",
+      "parent_id": "RACK_02"
+    }
+  ],
+  "control_domains": [
+    {
+      "id": "CDU_DOMAIN_01",
+      "cdu_id": "CDU_01",
+      "owner": "lc-core",
+      "heat_sink_id": "SINK_01",
+      "served_racks": [
+        "RACK_01",
+        "RACK_02"
+      ],
+      "shared_hydraulics": false
+    }
+  ],
+  "devices": {
+    "CDU_01": {
+      "type": "liquid_to_liquid",
+      "adapter": "thermal_sim",
+      "evidence": "illustrative_not_oem",
+      "initial_mode": "temperature_dp",
+      "max_data_age_s": 10,
+      "controls": {
+        "cdu.sec_supply_temp_sp": {
+          "unit": "degC",
+          "minimum": 20,
+          "maximum": 40,
+          "max_step": 2,
+          "minimum_interval_s": 5,
+          "allowed_modes": [
+            "temperature_dp"
+          ]
+        },
+        "cdu.dp_sp": {
+          "unit": "kPa",
+          "minimum": 15,
+          "maximum": 50,
+          "max_step": 5,
+          "minimum_interval_s": 5,
+          "allowed_modes": [
+            "temperature_dp"
+          ]
+        }
+      },
+      "initial_setpoints": {
+        "cdu.sec_supply_temp_sp": 28,
+        "cdu.dp_sp": 40
+      },
+      "initial_observations": {
+        "cdu.sec_supply_temp": {
+          "value": 301.15,
+          "unit": "K",
+          "asset_id": "CDU_01"
+        },
+        "cdu.sec_return_temp": {
+          "value": 306.83,
+          "unit": "K",
+          "asset_id": "CDU_01"
+        },
+        "cdu.sec_flow": {
+          "value": 3.16,
+          "unit": "kg/s",
+          "asset_id": "CDU_01"
+        },
+        "cdu.sec_dp": {
+          "value": 40,
+          "unit": "kPa",
+          "asset_id": "CDU_01"
+        },
+        "cdu.liquid_load": {
+          "unit": "W_th",
+          "value": 75000,
+          "asset_id": "CDU_01"
+        },
+        "cdu.electric_power": {
+          "unit": "W_e",
+          "value": 250,
+          "asset_id": "CDU_01"
+        }
+      },
+      "guards": {
+        "cdu.sec_supply_temp": {
+          "unit": "K",
+          "minimum": 293.15,
+          "maximum": 313.15
+        },
+        "cdu.sec_flow": {
+          "unit": "kg/s",
+          "minimum": 0.5,
+          "maximum": 6
+        },
+        "cdu.sec_dp": {
+          "unit": "kPa",
+          "minimum": 10,
+          "maximum": 60
+        },
+        "cdu.sec_return_temp": {
+          "unit": "K",
+          "minimum": 293.15,
+          "maximum": 326.15
+        }
+      },
+      "policy": {
+        "control_quantity": "cdu.dp_sp",
+        "cp_j_kg_k": 4180,
+        "target_delta_k": 8,
+        "minimum_flow_kg_s": 1.8,
+        "maximum_flow_kg_s": 3.5,
+        "return_soft_limit_k": 314.15,
+        "flow_per_sqrt_kpa": 0.43,
+        "gain_bounds": [
+          0.3,
+          0.7
+        ],
+        "thermal_tau_s": 40,
+        "horizon_s": 30,
+        "command_ttl_s": 4,
+        "max_data_age_s": 10,
+        "deadband": 0.1,
+        "max_liquid_load_w": 140000,
+        "adaptive_enabled": true,
+        "feedback_flow_per_k": 0.08,
+        "kind": "flow"
+      },
+      "simulation": {
+        "true_flow_per_sqrt_kpa": 0.5,
+        "cp_j_kg_k": 4050,
+        "density_kg_m3": 1010,
+        "pump_efficiency": 0.65,
+        "pump_idle_w": 60,
+        "pump_tau_s": 4,
+        "supply_tau_s": 12,
+        "return_tau_s": 35,
+        "local_fallback_flow_kg_s": 3.5
+      }
+    }
+  },
+  "extensions": {},
+  "physical_topology": {
+    "evidence": "illustrative",
+    "ports": [
+      {
+        "id": "primary_SINK_01_supply",
+        "asset_id": "SINK_01",
+        "side": "primary",
+        "direction": "supply",
+        "loop_id": "FWS_01"
+      },
+      {
+        "id": "primary_CDU_01_supply",
+        "asset_id": "CDU_01",
+        "side": "primary",
+        "direction": "supply",
+        "loop_id": "FWS_01"
+      },
+      {
+        "id": "primary_SINK_01_return",
+        "asset_id": "SINK_01",
+        "side": "primary",
+        "direction": "return",
+        "loop_id": "FWS_01"
+      },
+      {
+        "id": "primary_CDU_01_return",
+        "asset_id": "CDU_01",
+        "side": "primary",
+        "direction": "return",
+        "loop_id": "FWS_01"
+      },
+      {
+        "id": "trunk_CDU_01_supply",
+        "asset_id": "CDU_01",
+        "side": "secondary",
+        "direction": "supply",
+        "loop_id": "TCS_01"
+      },
+      {
+        "id": "trunk_MANIFOLD_01_supply",
+        "asset_id": "MANIFOLD_01",
+        "side": "secondary",
+        "direction": "supply",
+        "loop_id": "TCS_01"
+      },
+      {
+        "id": "trunk_CDU_01_return",
+        "asset_id": "CDU_01",
+        "side": "secondary",
+        "direction": "return",
+        "loop_id": "TCS_01"
+      },
+      {
+        "id": "trunk_MANIFOLD_01_return",
+        "asset_id": "MANIFOLD_01",
+        "side": "secondary",
+        "direction": "return",
+        "loop_id": "TCS_01"
+      },
+      {
+        "id": "branch_a_MANIFOLD_01_supply",
+        "asset_id": "MANIFOLD_01",
+        "side": "secondary",
+        "direction": "supply",
+        "loop_id": "TCS_01"
+      },
+      {
+        "id": "branch_a_RACK_01_supply",
+        "asset_id": "RACK_01",
+        "side": "secondary",
+        "direction": "supply",
+        "loop_id": "TCS_01"
+      },
+      {
+        "id": "branch_a_MANIFOLD_01_return",
+        "asset_id": "MANIFOLD_01",
+        "side": "secondary",
+        "direction": "return",
+        "loop_id": "TCS_01"
+      },
+      {
+        "id": "branch_a_RACK_01_return",
+        "asset_id": "RACK_01",
+        "side": "secondary",
+        "direction": "return",
+        "loop_id": "TCS_01"
+      },
+      {
+        "id": "branch_b_MANIFOLD_01_supply",
+        "asset_id": "MANIFOLD_01",
+        "side": "secondary",
+        "direction": "supply",
+        "loop_id": "TCS_01"
+      },
+      {
+        "id": "branch_b_RACK_02_supply",
+        "asset_id": "RACK_02",
+        "side": "secondary",
+        "direction": "supply",
+        "loop_id": "TCS_01"
+      },
+      {
+        "id": "branch_b_MANIFOLD_01_return",
+        "asset_id": "MANIFOLD_01",
+        "side": "secondary",
+        "direction": "return",
+        "loop_id": "TCS_01"
+      },
+      {
+        "id": "branch_b_RACK_02_return",
+        "asset_id": "RACK_02",
+        "side": "secondary",
+        "direction": "return",
+        "loop_id": "TCS_01"
+      }
+    ],
+    "connections": [
+      {
+        "id": "primary_supply",
+        "from_port": "primary_SINK_01_supply",
+        "to_port": "primary_CDU_01_supply"
+      },
+      {
+        "id": "primary_return",
+        "from_port": "primary_CDU_01_return",
+        "to_port": "primary_SINK_01_return"
+      },
+      {
+        "id": "trunk_supply",
+        "from_port": "trunk_CDU_01_supply",
+        "to_port": "trunk_MANIFOLD_01_supply"
+      },
+      {
+        "id": "trunk_return",
+        "from_port": "trunk_MANIFOLD_01_return",
+        "to_port": "trunk_CDU_01_return"
+      },
+      {
+        "id": "branch_a_supply",
+        "from_port": "branch_a_MANIFOLD_01_supply",
+        "to_port": "branch_a_RACK_01_supply"
+      },
+      {
+        "id": "branch_a_return",
+        "from_port": "branch_a_RACK_01_return",
+        "to_port": "branch_a_MANIFOLD_01_return"
+      },
+      {
+        "id": "branch_b_supply",
+        "from_port": "branch_b_MANIFOLD_01_supply",
+        "to_port": "branch_b_RACK_02_supply"
+      },
+      {
+        "id": "branch_b_return",
+        "from_port": "branch_b_RACK_02_return",
+        "to_port": "branch_b_MANIFOLD_01_return"
+      }
+    ],
+    "layout": {
+      "SINK_01": {
+        "x": 90,
+        "y": 260
+      },
+      "CDU_01": {
+        "x": 300,
+        "y": 260
+      },
+      "MANIFOLD_01": {
+        "x": 520,
+        "y": 260
+      },
+      "RACK_01": {
+        "x": 760,
+        "y": 150
+      },
+      "RACK_02": {
+        "x": 760,
+        "y": 390
+      },
+      "RACK_01_NODE_1": {
+        "x": 1020,
+        "y": 80
+      },
+      "RACK_01_NODE_2": {
+        "x": 1020,
+        "y": 220
+      },
+      "RACK_02_NODE_1": {
+        "x": 1020,
+        "y": 360
+      },
+      "RACK_02_NODE_2": {
+        "x": 1020,
+        "y": 500
+      }
+    }
+  }
+}

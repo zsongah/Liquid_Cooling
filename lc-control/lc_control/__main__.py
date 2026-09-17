@@ -1,4 +1,4 @@
-"""命令行入口：validate / demo / simulate / run / emulator / report。
+"""命令行入口：validate / demo / simulate / run / emulator / report / serve。
 
 解析参数后先校验配置，再选择运行流程；不会自动探测或抢占设备控制权。
 run 故障返回非零状态，便于外部进程管理器识别失败；SIGTERM 进入退出流程。"""
@@ -15,7 +15,7 @@ from .runtime import ControlService
 def main():
     """解析命令行参数、校验配置、调用对应流程，并输出结果。默认设备模式为 monitor。"""
     parser = argparse.ArgumentParser(description="Configurable CDU control runtime")
-    parser.add_argument("action", choices=("validate", "demo", "simulate", "run", "emulator", "report"))
+    parser.add_argument("action", choices=("validate", "demo", "simulate", "run", "emulator", "report", "serve"))
     parser.add_argument("scene", nargs="?")
     parser.add_argument("--audit", default=None)
     parser.add_argument("--output", default="outputs/latest")
@@ -25,10 +25,22 @@ def main():
     parser.add_argument("--interval", type=float, default=5)
     parser.add_argument("--domain")
     parser.add_argument("--forecast-file")
+    parser.add_argument("--host", default="127.0.0.1", choices=("127.0.0.1", "localhost"), help="工作台仅绑定本机回环地址")
+    parser.add_argument("--port", type=int, default=8765)
+    parser.add_argument("--project-root", help="工作台配置模板及已保存运行所在的项目目录")
+    parser.add_argument("--state-dir", help="工作台草稿、版本与后台运行保存目录")
+    parser.add_argument("--allow-hardware-control", action="store_true", help="允许工作台申请现场闭环；仍必须通过原有设备验收和安全网关")
     args = parser.parse_args()
     import math
     if not math.isfinite(args.interval) or args.interval <= 0 or args.steps < 0 or not math.isfinite(args.seconds) or args.seconds <= 0:
         parser.error("interval/seconds must be positive and finite; steps >= 0")
+    if args.action == "serve":
+        from pathlib import Path
+        from .console_server import serve
+        root = Path(args.project_root).resolve() if args.project_root else Path(__file__).resolve().parents[1]
+        serve(root, host=args.host, port=args.port, state_dir=args.state_dir,
+              allow_hardware_control=args.allow_hardware_control)
+        return
     if args.action == "report":
         from .report import render_report
         print(render_report(args.output).resolve())

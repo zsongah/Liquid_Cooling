@@ -2,6 +2,8 @@
 
 此工具只写 index.html，不启动控制器、不查询设备、不重跑实验。
 实验链接是明确选定的已保存基准；更换基准时同步修改手册第 10 节。
+outputs/ 不入库，因此只对本地实际存在的产物生成链接，缺失项标注“未随仓库发布”，
+避免克隆后出现指向不存在文件的死链。
 """
 import html
 import re
@@ -10,6 +12,14 @@ from urllib.parse import quote
 
 ROOT = Path(__file__).resolve().parents[1]
 MANUAL = "docs/" + quote("边缘液冷智控产品审查与使用手册.html")
+
+
+def _evidence_item(title, url):
+    """产物存在才生成链接；缺失时降级为带说明的纯文本，克隆后不产生死链。"""
+    if (ROOT / url).is_file():
+        return '<li><a href="' + html.escape(url, quote=True) + '">' + html.escape(title) + '</a></li>'
+    return ('<li><span class="missing">' + html.escape(title) +
+            '</span><small>未随仓库发布 · 需本地生成</small></li>')
 
 
 def main():
@@ -28,14 +38,19 @@ def main():
         '<small>' + number + '</small><h2>' + title + '</h2><p>' + detail + '</p></a>'
         for number, title, detail, section in chapters)
     results = [
-        ("实际 FMU 三策略闭环", "outputs/sustain-fmu-closed-loop-v2/index.html"),
+        ("向上级汇报 · CDU 场景、控制链与选定结果", "outputs/cdu-briefing-20260916/index.html"),
+        ("FMU 统一验证报告 · 29 组实验与核心配置", "outputs/fmu-validation-20260915/index.html"),
         ("合成液对液仿真", "outputs/no-hardware-l2l-20260914/report.html"),
         ("合成液对气仿真", "outputs/no-hardware-l2a-20260914/report.html"),
         ("本机 TCP 通信报告", "outputs/wire-demo/report.html"),
-        ("回归测试记录", "outputs/test-results-fmu.txt"),
+        ("最新收尾回归 · v0.6.0 / 2026-09-17", "outputs/test-results-release-closure-20260917.txt"),
+        ("前端交互回归 · JSON 编辑与历史记录隔离", "outputs/test-results-frontend-closure-20260917.txt"),
+        ("预测、拓扑与控制核心回归 · 2026-09-16", "outputs/test-results-console-v060-20260916.txt"),
+        ("新版界面与后台闭环验收 · v0.6.0", "outputs/console-v060-acceptance-20260916/verification.json"),
+        ("历史工作台回归测试 · v0.5.0", "outputs/test-results-workbench-20260916.txt"),
+        ("历史 FMU 跟踪修正测试 · v0.4.1", "outputs/test-results-tracking-correction.txt"),
     ]
-    evidence = "".join('<li><a href="' + url + '">' + title + '</a></li>'
-                       for title, url in results)
+    evidence = "".join(_evidence_item(title, url) for title, url in results)
     page = '''<!doctype html><html lang="zh-CN"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>LC Control · 产品与使用入口</title><style>
@@ -53,16 +68,23 @@ color:var(--ink)}.card:hover{border-color:var(--teal);background:#fcfffe}.card s
 h2{font-size:21px;line-height:1.5;margin:8px 0}.card p{font-size:14px;color:var(--muted);margin:8px 0 0}
 section{background:white;border:1px solid var(--line);padding:24px;border-radius:10px;margin-top:24px}
 section p,footer{font-size:13px;color:var(--muted)}ul{padding-left:22px;columns:2;column-gap:36px}
-li{padding:6px 0;break-inside:avoid}footer{margin-top:24px}a:focus-visible{outline:3px solid #c8993c;
+li{padding:6px 0;break-inside:avoid}.missing{color:var(--muted)}li small{display:block;color:#8a9ea4;font-size:12px}footer{margin-top:24px}a:focus-visible{outline:3px solid #c8993c;
 outline-offset:4px}@media(max-width:800px){.grid{grid-template-columns:repeat(2,1fr)}
 main{padding:32px 20px}h1{font-size:34px}}@media(max-width:520px){.grid{grid-template-columns:1fr}
 ul{columns:1}.card{padding:18px}h1{font-size:30px}}
 </style></head><body><main><header><div class="brand">LC CONTROL / v__VERSION__</div>
 <h1>AIDC 液冷智控软件</h1><p>一份手册，了解产品、配置、算法、设备接入与开发验证。
 完整内容集中维护，以下入口直接定位对应章节。</p>
-<a class="primary" href="__MANUAL__">打开完整使用手册</a><a href="README.md">快速启动</a>
-</header><div class="grid">__CARDS__</div><section><h2>已保存的验证报告</h2>
-<p>以下均为开发实验。结果口径、已知限制及现场验收缺口见手册第 10 节；页面不显示设备实时状态。</p>
+<a class="primary" href="__MANUAL__">打开完整使用手册</a>
+<a class="primary" href="docs/实施框架与通信链路.html">查看实施框架双图</a><a href="README.md">快速启动</a>
+</header><section style="margin-bottom:24px"><h2>边缘工作台 · 实际交互界面</h2>
+<p>在 lc-control 目录运行 <code>python3 -m lc_control serve</code>，然后打开本机工作台。
+可查看物理连接、读取真实运行记录、编辑并发布配置、启动合成仿真。
+本页是离线文档入口；工作台连接后台服务后才显示运行数据。</p>
+<a class="primary" href="http://127.0.0.1:8765">打开本机工作台</a>
+<p>推荐从 workbench_physical 或 workbench_independent_cdus 模板开始。FMU 历史记录可查询，新实验仍由专用 Master 启动。</p>
+</section><div class="grid">__CARDS__</div><section><h2>已保存的验证报告</h2>
+<p>以下均为开发实验。结果口径、已知限制及现场验收缺口见手册第 10 节；页面不显示设备实时状态。为保持仓库轻量，<code>outputs/</code> 不入库：本地产物存在时才显示链接，否则标注“未随仓库发布 · 需本地生成”。</p>
 <ul>__EVIDENCE__</ul></section><footer>软件版本来自 pyproject.toml。
 手册 Markdown 是完整说明的唯一来源，HTML 与此入口由构建工具生成。</footer></main></body></html>'''
     for key, value in {"__VERSION__": html.escape(version), "__MANUAL__": MANUAL,

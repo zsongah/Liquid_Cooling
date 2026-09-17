@@ -1,0 +1,93 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1800" height="1350" viewBox="0 0 1800 1350" role="img">
+<title>AIDC 液冷智控软件：当前实施框架</title>
+<rect width="100%" height="100%" fill="white"/>
+<text x="55" y="38" dominant-baseline="hanging" font-family="Heiti SC, PingFang SC, Noto Sans CJK SC, sans-serif" font-size="53" font-weight="600" fill="#102F43">AIDC 液冷智控软件</text>
+<text x="58" y="108" dominant-baseline="hanging" font-family="Heiti SC, PingFang SC, Noto Sans CJK SC, sans-serif" font-size="27" font-weight="400" fill="#526C7D">当前实施框架  /  边缘部署 · 单 CDU 监督控制 · 标准接口复用</text>
+<text x="1445" y="55" dominant-baseline="hanging" font-family="Heiti SC, PingFang SC, Noto Sans CJK SC, sans-serif" font-size="22" font-weight="400" fill="#087F80">v0.4.1  /  2026.09.15</text>
+<rect x="55" y="172" width="1190" height="152" rx="16" fill="#EFF5FC" stroke="#CFDFE5" stroke-width="2"/>
+<text x="80" y="194" dominant-baseline="hanging" font-family="Heiti SC, PingFang SC, Noto Sans CJK SC, sans-serif" font-size="30" font-weight="600" fill="#102F43">上游输入</text>
+<text x="300" y="204" dominant-baseline="hanging" font-family="Heiti SC, PingFang SC, Noto Sans CJK SC, sans-serif" font-size="28" font-weight="600" fill="#102F43">设备与拓扑</text>
+<text x="300" y="254" dominant-baseline="hanging" font-family="Heiti SC, PingFang SC, Noto Sans CJK SC, sans-serif" font-size="23" font-weight="400" fill="#526C7D">点表 · 能力 · 服务机柜</text>
+<text x="620" y="204" dominant-baseline="hanging" font-family="Heiti SC, PingFang SC, Noto Sans CJK SC, sans-serif" font-size="28" font-weight="600" fill="#102F43">工程运行边界</text>
+<text x="620" y="254" dominant-baseline="hanging" font-family="Heiti SC, PingFang SC, Noto Sans CJK SC, sans-serif" font-size="23" font-weight="400" fill="#526C7D">温压/流量限值 · 控制归属</text>
+<text x="965" y="204" dominant-baseline="hanging" font-family="Heiti SC, PingFang SC, Noto Sans CJK SC, sans-serif" font-size="28" font-weight="600" fill="#102F43">可选功率预测</text>
+<text x="965" y="254" dominant-baseline="hanging" font-family="Heiti SC, PingFang SC, Noto Sans CJK SC, sans-serif" font-size="23" font-weight="400" fill="#526C7D">JSON 文件 · 机柜聚合</text>
+<polyline points="650,324 650,373" fill="none" stroke="#087F80" stroke-width="4" stroke-linejoin="round"/>
+<polygon points="650,373 656.0,359.0 644.0,359.0" fill="#087F80"/>
+<text x="675" y="335" dominant-baseline="hanging" font-family="Heiti SC, PingFang SC, Noto Sans CJK SC, sans-serif" font-size="22" font-weight="400" fill="#087F80">配置 / 需求</text>
+<rect x="55" y="385" width="1190" height="433" rx="16" fill="#EAF7F5" stroke="#9CCFC9" stroke-width="2"/>
+<text x="81" y="412" dominant-baseline="hanging" font-family="Heiti SC, PingFang SC, Noto Sans CJK SC, sans-serif" font-size="33" font-weight="600" fill="#102F43">边缘计算机上的软件核心</text>
+<text x="848" y="423" dominant-baseline="hanging" font-family="Heiti SC, PingFang SC, Noto Sans CJK SC, sans-serif" font-size="25" font-weight="400" fill="#087F80">CLI 启动 → Engine.tick()</text>
+<rect x="80" y="478" width="370" height="150" rx="16" fill="white" stroke="#CFDFE5" stroke-width="2"/>
+<rect x="100" y="501" width="5" height="28" rx="2" fill="#087F80" stroke="#087F80" stroke-width="2"/>
+<text x="120" y="502" dominant-baseline="hanging" font-family="Heiti SC, PingFang SC, Noto Sans CJK SC, sans-serif" font-size="29" font-weight="600" fill="#102F43">设备适配</text>
+<text x="104" y="555" dominant-baseline="hanging" font-family="Heiti SC, PingFang SC, Noto Sans CJK SC, sans-serif" font-size="24" font-weight="400" fill="#526C7D">Modbus TCP 点表映射</text>
+<text x="104" y="592" dominant-baseline="hanging" font-family="Heiti SC, PingFang SC, Noto Sans CJK SC, sans-serif" font-size="24" font-weight="400" fill="#526C7D">单位 / 编码 / 状态归一</text>
+<rect x="465" y="478" width="370" height="150" rx="16" fill="white" stroke="#CFDFE5" stroke-width="2"/>
+<rect x="485" y="501" width="5" height="28" rx="2" fill="#087F80" stroke="#087F80" stroke-width="2"/>
+<text x="505" y="502" dominant-baseline="hanging" font-family="Heiti SC, PingFang SC, Noto Sans CJK SC, sans-serif" font-size="29" font-weight="600" fill="#102F43">连续运行</text>
+<text x="489" y="555" dominant-baseline="hanging" font-family="Heiti SC, PingFang SC, Noto Sans CJK SC, sans-serif" font-size="24" font-weight="400" fill="#526C7D">Engine 编排采集与决策</text>
+<text x="489" y="592" dominant-baseline="hanging" font-family="Heiti SC, PingFang SC, Noto Sans CJK SC, sans-serif" font-size="24" font-weight="400" fill="#526C7D">数据质量 / 模式检查</text>
+<rect x="850" y="478" width="370" height="150" rx="16" fill="white" stroke="#CFDFE5" stroke-width="2"/>
+<rect x="870" y="501" width="5" height="28" rx="2" fill="#087F80" stroke="#087F80" stroke-width="2"/>
+<text x="890" y="502" dominant-baseline="hanging" font-family="Heiti SC, PingFang SC, Noto Sans CJK SC, sans-serif" font-size="29" font-weight="600" fill="#102F43">需求与控制</text>
+<text x="874" y="555" dominant-baseline="hanging" font-family="Heiti SC, PingFang SC, Noto Sans CJK SC, sans-serif" font-size="24" font-weight="400" fill="#526C7D">FlowPolicy 计算热需求</text>
+<text x="874" y="592" dominant-baseline="hanging" font-family="Heiti SC, PingFang SC, Noto Sans CJK SC, sans-serif" font-size="24" font-weight="400" fill="#526C7D">输出流量或压差目标</text>
+<rect x="80" y="647" width="370" height="150" rx="16" fill="white" stroke="#CFDFE5" stroke-width="2"/>
+<rect x="100" y="670" width="5" height="28" rx="2" fill="#087F80" stroke="#087F80" stroke-width="2"/>
+<text x="120" y="671" dominant-baseline="hanging" font-family="Heiti SC, PingFang SC, Noto Sans CJK SC, sans-serif" font-size="29" font-weight="600" fill="#102F43">命令网关</text>
+<text x="104" y="724" dominant-baseline="hanging" font-family="Heiti SC, PingFang SC, Noto Sans CJK SC, sans-serif" font-size="24" font-weight="400" fill="#526C7D">ControlService 限幅限速</text>
+<text x="104" y="761" dominant-baseline="hanging" font-family="Heiti SC, PingFang SC, Noto Sans CJK SC, sans-serif" font-size="24" font-weight="400" fill="#526C7D">审计 / 回读 / 异常暂停</text>
+<rect x="465" y="647" width="370" height="150" rx="16" fill="white" stroke="#CFDFE5" stroke-width="2"/>
+<rect x="485" y="670" width="5" height="28" rx="2" fill="#087F80" stroke="#087F80" stroke-width="2"/>
+<text x="505" y="671" dominant-baseline="hanging" font-family="Heiti SC, PingFang SC, Noto Sans CJK SC, sans-serif" font-size="29" font-weight="600" fill="#102F43">有界校准</text>
+<text x="489" y="724" dominant-baseline="hanging" font-family="Heiti SC, PingFang SC, Noto Sans CJK SC, sans-serif" font-size="24" font-weight="400" fill="#526C7D">流量—压差增益修正</text>
+<text x="489" y="761" dominant-baseline="hanging" font-family="Heiti SC, PingFang SC, Noto Sans CJK SC, sans-serif" font-size="24" font-weight="400" fill="#526C7D">合格样本 / 候选验证</text>
+<rect x="850" y="647" width="370" height="150" rx="16" fill="white" stroke="#CFDFE5" stroke-width="2"/>
+<rect x="870" y="670" width="5" height="28" rx="2" fill="#087F80" stroke="#087F80" stroke-width="2"/>
+<text x="890" y="671" dominant-baseline="hanging" font-family="Heiti SC, PingFang SC, Noto Sans CJK SC, sans-serif" font-size="29" font-weight="600" fill="#102F43">数据与预警</text>
+<text x="874" y="724" dominant-baseline="hanging" font-family="Heiti SC, PingFang SC, Noto Sans CJK SC, sans-serif" font-size="24" font-weight="400" fill="#526C7D">SQLite / 命令日志</text>
+<text x="874" y="761" dominant-baseline="hanging" font-family="Heiti SC, PingFang SC, Noto Sans CJK SC, sans-serif" font-size="24" font-weight="400" fill="#526C7D">温度风险 / 离线报告</text>
+<polyline points="470,818 470,896" fill="none" stroke="#087F80" stroke-width="4" stroke-linejoin="round"/>
+<polygon points="470,896 476.0,882.0 464.0,882.0" fill="#087F80"/>
+<text x="292" y="843" dominant-baseline="hanging" font-family="Heiti SC, PingFang SC, Noto Sans CJK SC, sans-serif" font-size="24" font-weight="400" fill="#087F80">流量 / 压差目标</text>
+<polyline points="855,896 855,818" fill="none" stroke="#2866A4" stroke-width="4" stroke-linejoin="round"/>
+<polygon points="855,818 849.0,832.0 861.0,832.0" fill="#2866A4"/>
+<text x="887" y="843" dominant-baseline="hanging" font-family="Heiti SC, PingFang SC, Noto Sans CJK SC, sans-serif" font-size="24" font-weight="400" fill="#2866A4">测量 / 目标回读 / 状态</text>
+<rect x="55" y="909" width="1190" height="157" rx="16" fill="#EFF5FC" stroke="#CFDFE5" stroke-width="2"/>
+<text x="82" y="935" dominant-baseline="hanging" font-family="Heiti SC, PingFang SC, Noto Sans CJK SC, sans-serif" font-size="32" font-weight="600" fill="#102F43">下游：CDU 本地控制器</text>
+<text x="82" y="991" dominant-baseline="hanging" font-family="Heiti SC, PingFang SC, Noto Sans CJK SC, sans-serif" font-size="25" font-weight="400" fill="#526C7D">泵阀内环 · 设备保护 · 心跳超时接管</text>
+<polyline points="695,986 767,986" fill="none" stroke="#087F80" stroke-width="4" stroke-linejoin="round"/>
+<polygon points="767,986 753.0,980.0 753.0,992.0" fill="#087F80"/>
+<text x="805" y="940" dominant-baseline="hanging" font-family="Heiti SC, PingFang SC, Noto Sans CJK SC, sans-serif" font-size="30" font-weight="600" fill="#102F43">液冷回路与机柜</text>
+<text x="805" y="992" dominant-baseline="hanging" font-family="Heiti SC, PingFang SC, Noto Sans CJK SC, sans-serif" font-size="23" font-weight="400" fill="#526C7D">真实响应由设备与物理回路产生</text>
+<rect x="1290" y="172" width="455" height="894" rx="16" fill="#FFF6E7" stroke="#E4CFAB" stroke-width="2"/>
+<text x="1318" y="198" dominant-baseline="hanging" font-family="Heiti SC, PingFang SC, Noto Sans CJK SC, sans-serif" font-size="33" font-weight="600" fill="#102F43">后续扩展</text>
+<text x="1318" y="250" dominant-baseline="hanging" font-family="Heiti SC, PingFang SC, Noto Sans CJK SC, sans-serif" font-size="25" font-weight="400" fill="#A67120">规划能力 · 尚未实现</text>
+<rect x="1313" y="306" width="408" height="160" rx="16" fill="white" stroke="#CFDFE5" stroke-width="2"/>
+<rect x="1333" y="329" width="5" height="28" rx="2" fill="#A67120" stroke="#A67120" stroke-width="2"/>
+<text x="1353" y="330" dominant-baseline="hanging" font-family="Heiti SC, PingFang SC, Noto Sans CJK SC, sans-serif" font-size="28" font-weight="600" fill="#102F43">系统总能耗优化</text>
+<text x="1337" y="383" dominant-baseline="hanging" font-family="Heiti SC, PingFang SC, Noto Sans CJK SC, sans-serif" font-size="24" font-weight="400" fill="#526C7D">CDU 与冷源联合目标</text>
+<text x="1337" y="420" dominant-baseline="hanging" font-family="Heiti SC, PingFang SC, Noto Sans CJK SC, sans-serif" font-size="24" font-weight="400" fill="#526C7D">设备组合 / 负荷分配</text>
+<rect x="1313" y="486" width="408" height="160" rx="16" fill="white" stroke="#CFDFE5" stroke-width="2"/>
+<rect x="1333" y="509" width="5" height="28" rx="2" fill="#A67120" stroke="#A67120" stroke-width="2"/>
+<text x="1353" y="510" dominant-baseline="hanging" font-family="Heiti SC, PingFang SC, Noto Sans CJK SC, sans-serif" font-size="28" font-weight="600" fill="#102F43">多 CDU 与环境协调</text>
+<text x="1337" y="563" dominant-baseline="hanging" font-family="Heiti SC, PingFang SC, Noto Sans CJK SC, sans-serif" font-size="24" font-weight="400" fill="#526C7D">共享水路统一调度</text>
+<text x="1337" y="600" dominant-baseline="hanging" font-family="Heiti SC, PingFang SC, Noto Sans CJK SC, sans-serif" font-size="24" font-weight="400" fill="#526C7D">供温 / 冷源模式寻优</text>
+<rect x="1313" y="666" width="408" height="160" rx="16" fill="white" stroke="#CFDFE5" stroke-width="2"/>
+<rect x="1333" y="689" width="5" height="28" rx="2" fill="#A67120" stroke="#A67120" stroke-width="2"/>
+<text x="1353" y="690" dominant-baseline="hanging" font-family="Heiti SC, PingFang SC, Noto Sans CJK SC, sans-serif" font-size="28" font-weight="600" fill="#102F43">更完整模型与诊断</text>
+<text x="1337" y="743" dominant-baseline="hanging" font-family="Heiti SC, PingFang SC, Noto Sans CJK SC, sans-serif" font-size="24" font-weight="400" fill="#526C7D">机柜 / 芯片热模型</text>
+<text x="1337" y="780" dominant-baseline="hanging" font-family="Heiti SC, PingFang SC, Noto Sans CJK SC, sans-serif" font-size="24" font-weight="400" fill="#526C7D">泄漏预测 / 冷却液健康</text>
+<rect x="1313" y="846" width="408" height="160" rx="16" fill="white" stroke="#CFDFE5" stroke-width="2"/>
+<rect x="1333" y="869" width="5" height="28" rx="2" fill="#A67120" stroke="#A67120" stroke-width="2"/>
+<text x="1353" y="870" dominant-baseline="hanging" font-family="Heiti SC, PingFang SC, Noto Sans CJK SC, sans-serif" font-size="28" font-weight="600" fill="#102F43">接口与产品化运维</text>
+<text x="1337" y="923" dominant-baseline="hanging" font-family="Heiti SC, PingFang SC, Noto Sans CJK SC, sans-serif" font-size="24" font-weight="400" fill="#526C7D">BMS / iCooling · 多协议</text>
+<text x="1337" y="960" dominant-baseline="hanging" font-family="Heiti SC, PingFang SC, Noto Sans CJK SC, sans-serif" font-size="24" font-weight="400" fill="#526C7D">实时界面 / 权限 / 恢复</text>
+<rect x="55" y="1104" width="1690" height="139" rx="16" fill="#F5F8FA" stroke="#CFDFE5" stroke-width="2"/>
+<text x="80" y="1127" dominant-baseline="hanging" font-family="Heiti SC, PingFang SC, Noto Sans CJK SC, sans-serif" font-size="28" font-weight="600" fill="#102F43">当前可用的验证载体</text>
+<text x="80" y="1184" dominant-baseline="hanging" font-family="Heiti SC, PingFang SC, Noto Sans CJK SC, sans-serif" font-size="26" font-weight="400" fill="#087F80">合成热模型</text>
+<text x="365" y="1184" dominant-baseline="hanging" font-family="Heiti SC, PingFang SC, Noto Sans CJK SC, sans-serif" font-size="26" font-weight="400" fill="#087F80">本机 Modbus TCP 模拟器</text>
+<text x="883" y="1184" dominant-baseline="hanging" font-family="Heiti SC, PingFang SC, Noto Sans CJK SC, sans-serif" font-size="26" font-weight="400" fill="#087F80">Sustain-LC 实际 FMU 闭环</text>
+<text x="80" y="1273" dominant-baseline="hanging" font-family="Heiti SC, PingFang SC, Noto Sans CJK SC, sans-serif" font-size="25" font-weight="400" fill="#526C7D">范围：默认监测；自动策略保持供温。尚无厂家实机验收，当前 FMU 实验未取得节能收益。</text>
+</svg>

@@ -1,0 +1,10 @@
+{
+  "description": "Four additional profiles; compare a fixed DP baseline and frozen-parameter Kp=0/1/2 policies. Native PID and device limits unchanged.",
+  "variants": {"baseline": null, "kp0": 0.0, "kp1": 1.0, "kp2": 2.0},
+  "cases": [
+    {"id": "small_10min", "title": "小幅负荷变化 · 10 min", "phase_s": 600, "profile_w": [60000,65000,60000,55000,60000,60000]},
+    {"id": "fast_5min", "title": "快速负荷变化 · 5 min", "phase_s": 300, "profile_w": [60000,75000,50000,80000,60000,60000,75000,50000,80000,60000,60000,60000]},
+    {"id": "medium_30min", "title": "中等周期 · 30 min", "phase_s": 1800, "profile_w": [60000,75000,60000]},
+    {"id": "range_60min", "title": "大幅变化与可达边界 · 60 min", "phase_s": 3600, "profile_w": [60000,85000,50000,60000]}
+  ]
+}

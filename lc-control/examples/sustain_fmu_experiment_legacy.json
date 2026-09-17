@@ -7,8 +7,7 @@
     "Laboratory only. One master owns the entire FMU; only group 1 DP is adjusted.",
     "Other four groups, branch valves, supply targets and tower target remain fixed.",
     "The source dp input is psi, proven by its internal Pa-to-psi comparator. All standard DP quantities are kPa.",
-    "Reference experiment limits are not OEM limits; startup/warmup is excluded from performance evaluation.",
-    "Hydraulic model identified from constant-load hold and verified against +/-3 kPa steps on 2026-09-15. External DP feedback only; native PID and limits unchanged. See correction report; rapid-load tracking remains limited."
+    "Reference experiment limits are not OEM limits; startup/warmup is excluded from performance evaluation."
   ],
   "assets": [
     {
@@ -109,6 +108,11 @@
         "minimum_flow_kg_s": 8,
         "maximum_flow_kg_s": 18,
         "return_soft_limit_k": 315.15,
+        "flow_per_sqrt_kpa": 0.95,
+        "gain_bounds": [
+          0.5,
+          1.5
+        ],
         "thermal_tau_s": 300,
         "horizon_s": 60,
         "command_ttl_s": 15,
@@ -116,17 +120,7 @@
         "deadband": 0.2,
         "max_liquid_load_w": 2000000,
         "adaptive_enabled": false,
-        "feedback_flow_per_k": 0.08,
-        "hydraulic_model": {
-          "exponent": 1.0,
-          "gain": 0.06464488229246412,
-          "gain_bounds": [
-            0.04,
-            0.09
-          ]
-        },
-        "calibration_max_dp_error_kpa": 0.5,
-        "dp_feedback_gain": 2.0
+        "feedback_flow_per_k": 0.08
       }
     }
   },

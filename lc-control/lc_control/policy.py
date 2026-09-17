@@ -3,7 +3,8 @@
 热需求由独立液冷热负荷或当前流量/温差估算；可叠加有效的外部负荷预测。
 按 Q/(cp·ΔT) 求流量需求，叠加正向温差反馈，再转换为流量或压差设定。
 供温目标在本版保持。回液预测是一阶近似，不是完整数字孪生或芯片热模型。
-学习只更新 flow≈gain·sqrt(dp) 的 gain，不能学习/放宽工程安全边界。"""
+水力关系支持 flow≈gain·dp**exponent；旧配置仍使用平方根关系。
+可选压差反馈修正实际响应偏差，不积累积分，不学习/放宽工程安全边界。"""
 import math
 import statistics
 import uuid
@@ -11,6 +12,15 @@ from dataclasses import asdict
 
 from .configuration import finite
 from .contracts import ControlRequest
+
+
+# 外环压差 P 修正的无量纲整定范围，属于当前软件有意设置的支持边界。
+# 已有 experiments/fmu_validation_matrix.json 及对应结果只覆盖 Kp=0/1/2
+# 三个离散值；2.0 不是厂家设备的物理上限，也不是普适稳定性结论，更不
+# 表示区间内任意值在任意机房都已验证。默认 0 关闭这一项附加反馈。
+# 放宽范围前需针对对象动态、延迟/噪声、限幅限速和负荷工况重新验证，不能
+# 因界面需要输入更大值便删除检查；本参数也不同于水力 gain 或 CDU 本地 PID。
+DP_FEEDBACK_GAIN_BOUNDS = (0.0, 2.0)
 
 
 def clamp(value, lower, upper):
@@ -22,23 +32,45 @@ class FlowPolicy:
     """与厂商协议无关的热需求控制器，同时维护一个聚合水力增益。"""
     def __init__(self, config):
         self.config = config
+        # 指数与增益必须来自该回路的辨识。旧字段保留兼容，但不能把一种
+        # 模型的 gain 直接复制给另一种指数：gain 的单位随指数改变。
+        model = config.get("hydraulic_model", {})
+        if not isinstance(model, dict) or ("hydraulic_model" in config and
+                (set(model) != {"exponent", "gain", "gain_bounds"}
+                 or "flow_per_sqrt_kpa" in config or "gain_bounds" in config)):
+            raise ValueError("hydraulic_model_requires_explicit_unambiguous_parameters")
+        self.exponent = model.get("exponent", 0.5)
+        self.gain = model.get("gain", config.get("flow_per_sqrt_kpa"))
+        self.gain_bounds = model.get("gain_bounds", config.get("gain_bounds"))
+        self.dp_feedback_gain = config.get("dp_feedback_gain", 0.0)
+        if not finite(self.exponent) or not 0.25 <= self.exponent <= 1.5:
+            raise ValueError("invalid_hydraulic_exponent")
+        if not finite(self.gain) or self.gain <= 0:
+            raise ValueError("invalid_hydraulic_gain")
+        if (not finite(self.dp_feedback_gain)
+                or not DP_FEEDBACK_GAIN_BOUNDS[0] <= self.dp_feedback_gain <= DP_FEEDBACK_GAIN_BOUNDS[1]):
+            raise ValueError("invalid_dp_feedback_gain")
+        settling_error = config.get("calibration_max_dp_error_kpa")
+        if settling_error is not None and (not finite(settling_error) or settling_error <= 0):
+            raise ValueError("invalid_calibration_max_dp_error_kpa")
         feedback_gain = config.get("feedback_flow_per_k", 0.08)
         if not finite(feedback_gain) or feedback_gain < 0:
             raise ValueError("invalid_feedback_flow_per_k")
         for key in ("cp_j_kg_k", "target_delta_k", "minimum_flow_kg_s", "maximum_flow_kg_s",
-                    "return_soft_limit_k", "flow_per_sqrt_kpa", "thermal_tau_s", "horizon_s",
+                    "return_soft_limit_k", "thermal_tau_s", "horizon_s",
                     "command_ttl_s", "max_data_age_s", "deadband", "max_liquid_load_w"):
             if not finite(config.get(key)) or config[key] <= 0:
                 raise ValueError("invalid_policy_parameter:" + key)
         if config["minimum_flow_kg_s"] >= config["maximum_flow_kg_s"]:
             raise ValueError("invalid_policy_flow_bounds")
-        bounds = config["gain_bounds"]
-        if not (len(bounds) == 2 and all(finite(x) for x in bounds)
-                and 0 < bounds[0] < config["flow_per_sqrt_kpa"] < bounds[1]):
+        bounds = self.gain_bounds
+        if not (isinstance(bounds, (list, tuple)) and len(bounds) == 2 and all(finite(x) for x in bounds)
+                and 0 < bounds[0] < self.gain < bounds[1]):
             raise ValueError("invalid_gain_bounds")
         if config["control_quantity"] not in ("cdu.dp_sp", "cdu.sec_flow_sp"):
             raise ValueError("policy_supports_only_dp_or_flow")
-        self.gain = config["flow_per_sqrt_kpa"]
+        if config["control_quantity"] != "cdu.dp_sp" and self.dp_feedback_gain:
+            raise ValueError("dp_feedback_requires_dp_control")
         self.version = 0
         self.samples = []
         self.previous = None
@@ -91,7 +123,7 @@ class FlowPolicy:
             return None, "forecast_rejected"
 
     def observe(self, snapshot, now, controls, safe):
-        """从准稳态、无报警、非饱和的数据估计 flow = gain × sqrt(dp)。
+        """从准稳态、无报警、非饱和的数据估计 flow = gain × dp**exponent。
         最近合格样本中留最后 8 个作较晚时间验证，缺乏激励则冻结。
         候选最多改变 2%，验证均方误差至少下降 2% 才晋升；不是独立长期验证。"""
         c = self.config
@@ -116,9 +148,16 @@ class FlowPolicy:
         q = c["control_quantity"]
         cap = controls[q]
         sp = snapshot.setpoints[q].value
+        # 慢内环可能连续多次变化不到 2%，却仍远未达到设定值。
+        # 启用此门槛后，不把这种缓慢过渡误当成可晋升的稳态校准数据。
+        limit = c.get("calibration_max_dp_error_kpa")
+        if q == "cdu.dp_sp" and limit is not None and abs(sp - dp) > limit:
+            self.samples.clear()
+            self.last_candidate_count = 0
+            return {"status": "frozen", "reason": "inner_loop_not_settled"}
         if sp <= cap.minimum + c["deadband"] or sp >= cap.maximum - c["deadband"]:
             return {"status": "frozen", "reason": "actuator_at_limit"}
-        self.samples.append((math.sqrt(dp), flow))
+        self.samples.append((dp ** self.exponent, flow))
         self.samples = self.samples[-60:]
         if len(self.samples) < 20:
             return {"status": "collecting", "samples": len(self.samples)}
@@ -129,7 +168,7 @@ class FlowPolicy:
         if max(x for x, _ in train) - min(x for x, _ in train) < 0.15:
             return {"status": "frozen", "reason": "insufficient_excitation"}
         estimate = sum(x * y for x, y in train) / sum(x * x for x, y in train)
-        if not c["gain_bounds"][0] <= estimate <= c["gain_bounds"][1]:
+        if not self.gain_bounds[0] <= estimate <= self.gain_bounds[1]:
             return {"status": "frozen", "reason": "candidate_outside_physical_bounds"}
         candidate = clamp(estimate, self.gain * 0.98, self.gain * 1.02)
         def mse(gain):
@@ -180,17 +219,40 @@ class FlowPolicy:
         if q not in controls:
             raise ValueError("policy_control_not_advertised")
         cap, current = controls[q], snapshot.setpoints[q].value
-        raw = (target_flow / self.gain) ** 2 if q == "cdu.dp_sp" else target_flow
-        target = clamp(clamp(raw, cap.minimum, cap.maximum), current - cap.max_step, current + cap.max_step)
+        equilibrium = (target_flow / self.gain) ** (1 / self.exponent) if q == "cdu.dp_sp" else target_flow
+        raw = equilibrium
+        dp = None
+        if q == "cdu.dp_sp":
+            dp = self.value(snapshot, "cdu.sec_dp", "kPa", now)
+            if dp <= 0:
+                raise ValueError("invalid_hydraulic_operating_state")
+            # 外环有界 P 校正：本地 PID 尚未跟上时适度增加驱动力，接近目标后
+            # 自动撤掉补偿。无积分状态，不会在限幅/拒写时积累待执行动作。
+            # 不改变 OEM PID/滤波器；增益默认 0，必须按已测得响应启用。
+            raw += self.dp_feedback_gain * (equilibrium - dp)
+        bounded = clamp(raw, cap.minimum, cap.maximum)
+        target = clamp(bounded, current - cap.max_step, current + cap.max_step)
         predicted_return = supply + load / (c["cp_j_kg_k"] * max(flow, 0.01))
         predicted_return = returned + (predicted_return - returned) * (1 - math.exp(-c["horizon_s"] / c["thermal_tau_s"]))
         self.last_decision = {"load_w_th": load, "load_provenance": provenance,
                               "forecast_status": forecast_status, "demand_flow_kg_s": demand,
                               "target_flow_kg_s": target_flow, "model_version": self.version,
-                              "gain": self.gain, "return_forecast_k": predicted_return,
+                              "gain": self.gain, "hydraulic_exponent": self.exponent,
+                              "dp_feedback_gain": self.dp_feedback_gain,
+                              "equilibrium_control_target": equilibrium,
+                              "raw_control_target": raw, "bounded_control_target": bounded,
+                              "limited_control_target": target,
+                              "flow_tracking_error_kg_s": target_flow - flow,
+                              "dp_tracking_error_kpa": current - dp if dp is not None else None,
+                              "model_flow_at_min_dp_kg_s": self.gain * cap.minimum ** self.exponent if dp is not None else None,
+                              "model_flow_at_max_dp_kg_s": self.gain * cap.maximum ** self.exponent if dp is not None else None,
+                              "return_forecast_k": predicted_return,
                               "warnings": (["return_soft_limit_risk"] if predicted_return > c["return_soft_limit_k"] else [])
                               + (["flow_capacity_saturated"] if demand > c["maximum_flow_kg_s"] else [])
-                              + (["control_capacity_saturated"] if raw > cap.maximum else [])}
+                              + (["control_capacity_saturated"] if equilibrium > cap.maximum else [])
+                              + (["control_below_minimum"] if equilibrium < cap.minimum else [])
+                              + (["feedback_command_clipped"] if raw != bounded else [])
+                              + (["control_rate_limited"] if not math.isclose(target, bounded, abs_tol=1e-9) else [])}
         if abs(target - current) < c["deadband"]:
             return None
         return ControlRequest(str(uuid.uuid4()), domain["cdu_id"], context["topology_version"],

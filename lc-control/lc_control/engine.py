@@ -10,7 +10,7 @@ import uuid
 from dataclasses import asdict, replace
 from pathlib import Path
 
-from .policy import FlowPolicy
+from .registry import create_policy
 from .runtime import ControlService
 from .storage import Store
 
@@ -27,7 +27,7 @@ class Engine:
         self.fingerprint = hashlib.sha256(json.dumps(scene, sort_keys=True).encode()).hexdigest()
         # 普通入口不传 factory；FMU 专用实验入口注入管理固定邻机边界的仿真网关。
         self.service = service_factory(scene, domain_id, adapter, self.output / "commands.jsonl")
-        self.policy = FlowPolicy(self.profile["policy"]) if "policy" in self.profile else None
+        self.policy = create_policy(self.profile["policy"]) if "policy" in self.profile else None
         if mode != "monitor" and self.policy is None:
             raise ValueError("policy_required_for_automatic_operation")
         # 配置/审计校验通过后再打开数据库，避免初始化失败遗留连接。
@@ -35,10 +35,13 @@ class Engine:
         prior = self.store.latest("model")
         if self.policy and prior and prior["fingerprint"] == self.fingerprint:
             gain = prior["gain"]
-            if self.policy.config["gain_bounds"][0] <= gain <= self.policy.config["gain_bounds"][1]:
+            if self.policy.gain_bounds[0] <= gain <= self.policy.gain_bounds[1]:
                 self.policy.gain, self.policy.version = gain, prior["version"]
         self.last_sample = None
         self.last_tick = None
+        # 同一周期的观测、校准、决策和故障使用稳定关联 ID。界面据此回放
+        # 真正参与计算的样本，不能用“最近一条”把不同周期的数据拼在一起。
+        self.cycle_index = 0
         self.closed = False
         try:
             self.store.put(time.time(), "session", {"session": self.session, "fingerprint": self.fingerprint,
@@ -49,33 +52,51 @@ class Engine:
             self.store.close()
             raise
 
-    def tick(self, now, forecast=None):
+    def tick(self, now, forecast=None, forecast_context=None, forecast_provider=None):
         """先采集保存，再守护和校准，最后产生候选并经过命令网关。
-        持久化失败或算法异常都会阻止继续自动控制；异常记录不包含完整远端报文。"""
+        持久化失败或算法异常都会阻止继续自动控制；异常记录不包含完整远端报文。
+
+        forecast_provider 是可信应用服务传入的内部回调，JSON 不能声明或执行它。
+        它在实际决策时刻物化预测，避免网络采集耗时使前馈首样本在计算前已过期。
+        旧 tick(now, forecast) 调用保持兼容。forecast_context 仅提供审计元数据。
+        """
         if self.last_tick is not None and now <= self.last_tick:
             raise ValueError("nonmonotonic_control_clock")
         self.last_tick = now
+        self.cycle_index += 1
+        cycle = {"session": self.session, "cycle_id": "%s:%s" % (self.session, self.cycle_index),
+                 "asset_id": self.domain["cdu_id"], "domain_id": self.domain["id"]}
         try:
             snapshot = self.adapter.read(now)
             clock = self.service._now(now)
-            self.store.put(clock, "telemetry", {"session": self.session, **asdict(snapshot)})
+            self.store.put(clock, "telemetry", {**cycle, **asdict(snapshot)})
             self.last_sample = snapshot
             if self.service.mode == "control":
                 self.service.heartbeat(clock)
             if not self.policy or self.service.mode not in ("shadow", "control"):
-                return {"mode": self.service.mode}
+                if forecast_provider:
+                    forecast, forecast_context = forecast_provider(self.service._now(now))
+                usage = dict(forecast_context) if forecast_context is not None else None
+                if usage is not None:
+                    if usage.get("status") == "ready":
+                        usage.update(status="not_used", reason="monitor_mode_no_automatic_control")
+                    self.store.put(clock, "forecast_usage", {**cycle, **usage})
+                return {**cycle, "mode": self.service.mode, "forecast_input": usage}
             errors = self.service._snapshot_errors(snapshot, self.service._now(now))
             safe = not errors
             calibration = self.policy.observe(snapshot, clock, self.adapter.describe().controls, safe)
-            self.store.put(clock, "calibration", {"session": self.session, **calibration})
+            self.store.put(clock, "calibration", {**cycle, **calibration})
             if calibration["status"] == "promoted":
-                self.store.put(clock, "model", {"session": self.session, "fingerprint": self.fingerprint,
+                self.store.put(clock, "model", {**cycle, "fingerprint": self.fingerprint,
                                "gain": self.policy.gain, "version": self.policy.version, **calibration})
             if errors:
                 raise ValueError(";".join(errors))
             context = {"now": self.service._now(now), "domain": self.domain,
                        "controls": self.adapter.describe().controls,
                        "topology_version": self.scene["topology_version"], "forecast": forecast}
+            if forecast_provider:
+                forecast, forecast_context = forecast_provider(context["now"])
+                context["forecast"] = forecast
             request = self.policy.propose(snapshot, context)
             receipt = None
             if request:
@@ -84,16 +105,28 @@ class Engine:
                 receipt = self.service.submit(request, self.service._now(now))
                 if receipt.status == "rejected" and receipt.reasons != ("minimum_interval_not_met",):
                     self.policy.last_decision["warnings"].append("command_rejected")
-            decision = {"session": self.session, "mode": self.service.mode,
+            decision = {**cycle, "mode": self.service.mode,
+                        "policy_quantity": self.profile["policy"]["control_quantity"],
+                        "input_timestamp": snapshot.timestamp,
+                        "observed_setpoints": {name: asdict(reading) for name, reading in snapshot.setpoints.items()},
                         **self.policy.last_decision, "request": asdict(request) if request else None,
                         "receipt": asdict(receipt) if receipt else None}
+            if forecast_context is not None:
+                usage = dict(forecast_context)
+                usage["policy_status"] = self.policy.last_decision.get("forecast_status")
+                if usage.get("status") == "ready":
+                    used = usage["policy_status"] == "forecast_used"
+                    usage.update(status="used" if used else "rejected",
+                                 reason="participated_in_demand_maximum" if used else "policy_rejected_materialized_forecast")
+                decision["forecast_input"] = usage
+                self.store.put(context["now"], "forecast_usage", {**cycle, **usage})
             self.store.put(clock, "decision", decision)
             return decision
         except Exception as error:
             if self.service.mode == "control":
                 self.service._pause("runtime_error:" + type(error).__name__)
             # Record diagnostic category, without copying raw remote payloads or secrets.
-            event = {"session": self.session, "mode": self.service.mode,
+            event = {**cycle, "mode": self.service.mode,
                      "error": type(error).__name__, "reason": str(error)[:240]}
             self.store.put(now, "fault", event)
             return event
