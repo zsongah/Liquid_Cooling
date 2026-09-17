@@ -1,6 +1,11 @@
 # LC Control · AIDC 液冷智控软件
 
-当前为 **v0.6.0 边缘工作台工程验证版**：提供机房拓扑与多独立域状态、功率预测接入及真实前馈、决策回放、配置草稿/发布、后台合成仿真及 Modbus 会话管理。沿用流量/压差控制、有界参数校准和实际 Sustain-LC FMU 实验链路。尚无厂家实机验收；物理连接图不等于管网求解器，尚无全站节能收益证明。
+当前为 **v0.7.0 边缘工作台工程验证版**，保留两条独立路径：
+
+- **Schema 0.1：CDU 监督控制。** 保留流量/压差控制、有界参数校准、功率预测前馈、合成热仿真、Modbus 会话和 Sustain-LC FMU 实验链路。
+- **Schema 0.2：只读静态水力分析（P0′/P1′）。** 显式配置资产、流体回路、水力连接点、元件和支路，计算流量、压力及声明误差范围内的区间；提供局部可辨识性筛查和独立数据校核。**不创建控制任务、不读取现场点表、不写设备；未实现降额/N+1 证明或支路热仿真。**
+
+尚无厂家实机验收或全站节能收益证明。新增水力分析不自动接入旧 CDU 控制算法；模型估计与设备实测分别展示。
 
 在本目录启动工作台（Python 3.9+，Unix，无第三方运行依赖）：
 
@@ -11,6 +16,20 @@ python3 -m lc_control serve
 浏览器打开 **[本机工作台](http://127.0.0.1:8765)**。选择 `workbench_physical` 模板，复制为新草稿，检查配置并保存发布，再到运行页启动合成仿真。界面使用真实的仿真记录；关闭页面不停止后台任务。草稿、版本及新运行保存在 `outputs/workbench/`。配置和数据来源在页面中分别标识；旧 FMU 记录可回放，新增 FMU 实验仍使用专用命令。
 
 “功率预测”页可查看输入契约、校验并提交显式 synthetic 试验数据；没有数据时保持未接入。后台按节点/机柜归属和液冷分担比例聚合到 CDU，实际算法使用记录与预览分别显示。详见手册第 8.4 节，原计划实现边界见第 13.1 节。
+
+无硬件也可先运行只读水力分析。以下 `--output` 是 **JSON 文件路径**：
+
+```bash
+python3 -m lc_control validate examples/hydraulic_parallel_v02.json
+python3 -m lc_control analyze examples/hydraulic_parallel_v02.json \
+  --domain DOMAIN_SECONDARY --output outputs/hydraulic-first-001.json
+```
+
+示例包含两个机柜、四个节点支路，参数均为合成条件。缺参数时报告未就绪；无有效误差区间或区间跨限时报告 `unknown`，不能按“设备安全”解读。局部灵敏度通过不证明全局唯一，留出校核通过不构成现场授权。CLI 完成不代表求解通过，应读取 `solver.status` 与各支路状态。
+
+网页使用：选择 `hydraulic_parallel_v02` 模板 → 复制草稿 → 高级 JSON 编辑、校验并发布 → 系统总览选择该发布配置 → **运行只读分析**。Schema 0.2 的旧参数表单和任务启动入口禁用，功率预测分配明确未支持。旧配置可用 `python3 -m lc_control migrate examples/workbench_physical.json --output outputs/migrated-scene-v02.json` 生成新草稿；迁移保留原声明并报告缺口，不猜测阻力、管径、物性和压力边界，也不修改旧配置或活动任务。详见手册第 3.2、8.5 节。
+
+运行 `python3 tools/build_hydraulic_report.py` 可重建七组静态案例、两类拓扑规模基准及离线报告 `outputs/hydraulic-analysis/index.html`；每组保存完整输入和原始结果。独立运行性能基准：`python3 tools/benchmark_hydraulics.py`。两者均不连接设备，具体计算范围和证据边界见报告及手册第 8.5 节。
 
 默认禁止网页发起现场闭环写入；监测/影子运行及显式启用现场控制的条件见手册第 8.3 节。工作台仅监听本机回环地址，不是已部署的远程多用户平台。
 

@@ -12,6 +12,16 @@ from .registry import create_adapter
 from .report import render_report
 
 
+def require_runtime_scene(scene):
+    """旧执行器只接受 0.1。0.2 为离线水力分析，不能靠字段或模式开放现场写。
+
+    必须在读取 cdu_id、创建输出目录或设备适配器之前调用，避免新版拓扑误入
+    单 CDU 驱动。monitor 同样属于设备执行入口；本阶段也不为 0.2 建立连接。
+    """
+    if not isinstance(scene, dict) or scene.get("schema_version") != "0.1":
+        raise ValueError("analysis_only_schema_not_executable")
+
+
 def domain_of(scene, domain_id=None):
     """单 CDU 场景可自动选域；多个 CDU 必须明确指定域，不默默只操作第一台。"""
     if domain_id:
@@ -28,6 +38,7 @@ def load_at(elapsed):
 
 def simulate(scene, output, seconds=1800, interval=5, adaptive=True):
     """驱动独立合成对象和产品 Engine，记录能耗、温度、边界事件及模型更新。"""
+    require_runtime_scene(scene)
     scene = copy.deepcopy(scene)
     domain = domain_of(scene)
     profile = scene["devices"][domain["cdu_id"]]
@@ -63,6 +74,7 @@ def simulate(scene, output, seconds=1800, interval=5, adaptive=True):
 def compare(scene, output, seconds=1800, interval=5):
     """在独立初始化且同负荷的对象上比较固定设定、固定参数算法和在线校准算法。
     要求新输出目录，防止旧数据/旧模型污染比较。"""
+    require_runtime_scene(scene)
     output = Path(output)
     output.mkdir(parents=True, exist_ok=True)
     if (output / "runtime.sqlite").exists():
@@ -95,6 +107,7 @@ def compare(scene, output, seconds=1800, interval=5):
 def run(scene, output, mode="monitor", steps=12, interval=5, domain_id=None, forecast_file=None):
     """在边缘机连续采集并按选定模式运行。0 步表示常驻，其余达到次数后退出。
     设备和输出目录都加锁，退出尝试交还控制；故障通过结果 exit_code=2 对外可见。"""
+    require_runtime_scene(scene)
     domain = domain_of(scene, domain_id)
     profile = scene["devices"][domain["cdu_id"]]
     if profile["adapter"] != "modbus_tcp":

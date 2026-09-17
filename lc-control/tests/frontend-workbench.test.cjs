@@ -12,21 +12,23 @@ const source = fs.readFileSync(path.join(webRoot, 'app.js'), 'utf8');
 const html = fs.readFileSync(path.join(webRoot, 'index.html'), 'utf8');
 const exposed = ['state','assetRecord','telemetryFor','selectedDomainStatus',
   'assetRecordLabel','renderMetrics','renderDevice','renderQuickPanels',
-  'updateConfigActions','markDirty','applySceneJson','discardSceneJson'];
+  'updateConfigActions','markDirty','applySceneJson','discardSceneJson','isAnalysisScene',
+  'relationLevels','parallelEdgeOffsets','renderAnalysis','clearAnalysis','runHydraulicAnalysis','renderBasicForm',
+  'renderAssetForm','updateRunOptions','renderForecast','forecastPayload'];
 const startup = '  initialize();\n})();';
 assert.ok(source.includes(startup), 'VM harness must remove only app startup');
-function harness() {
+function harness(fetchImpl) {
   const elements = new Map();
   function element(id) {
     if (!elements.has(id)) elements.set(id, {
       id, value:'', innerHTML:'', textContent:'', disabled:false, hidden:false,
-      style:{}, dataset:{}, classList:{toggle(){}}, listeners:{},
+      style:{}, dataset:{}, classList:{toggle(){}}, listeners:{}, options:[],selectedOptions:[],
       querySelectorAll(){return [];},
       addEventListener(type,callback){this.listeners[type]=callback;}
     });
     return elements.get(id);
   }
-  const context = vm.createContext({document:{getElementById:element},setTimeout,clearTimeout});
+  const context = vm.createContext({document:{getElementById:element},setTimeout,clearTimeout,AbortController,fetch:fetchImpl||(()=>{throw new Error('Unexpected network call');})});
   vm.runInContext(source.replace(startup, `  globalThis.workbench = {${exposed.join(',')}};\n})();`),context);
   return {...context.workbench, element};
 }
@@ -167,4 +169,122 @@ test('wrong-asset payload is not displayed under selected CDU identity',()=>{
   h.state.run.latest.telemetry=event(sample('WRONG_CDU',99,10));
   h.state.run.latest.decision=event({asset_id:'WRONG_CDU',demand_flow_kg_s:99});
   assert.equal(h.telemetryFor('CDU_A'),null);assert.equal(h.assetRecord('CDU_A').latest_decision,null);
+});
+
+
+function setupAnalysis(h,status='published',id='analysis-config'){
+  const scene={schema_version:'0.2',scene_id:'hydraulic-scene',assets:[{id:'CDU_X',kind:'cdu'},{id:'RACK_X',kind:'rack',parent_id:'CDU_X'}],hydraulics:{junctions:[{id:'j0',circuit_id:'c1'},{id:'j1',circuit_id:'c1'}],elements:[{id:'e1',from_junction:'j0',to_junction:'j1',kind:'pipe'}]},branches:[{id:'branch1'}],control_domains:[{id:'domain1',member_asset_ids:['CDU_X','RACK_X'],circuit_ids:['c1'],branch_ids:['branch1']}]};
+  const record={id,name:'Hydraulic configuration',revision:2,status,scene,validation:{valid:true}};
+  Object.assign(h.state,{topologyConfig:record,topologyConfigId:id,topologyLoading:false,analysisDomainId:'domain1',config:record,scene,original:scene,originalName:record.name,topology:{nodes:scene.assets,edges:[]},selectedAsset:'CDU_X'});
+  h.element('topology-source').value='config';return record;
+}
+function analysisResult(){return {source:'model_estimate',hardware_writes:false,domain_id:'domain1',
+  readiness:{status:'ready',reasons:[]},solver:{status:'converged',reason:null,iterations:4,residuals:{continuity_kg_s:1e-8}},
+  branches:[{id:'branch1',asset_ref:'RACK_X',estimated_flow_kg_s:2,flow_interval_kg_s:[1.8,2.2],min_flow_kg_s:1.5,max_flow_kg_s:3,status:'satisfied',reason:'within_declared_model_bounds',interval_kind:'conservative_model_bounds',field_safety_verified:false}],
+  identifiability:{status:'not_required',reason:'known_parameters'},validation:{status:'out_of_scope',reason:'missing_branch_measurements',field_validated:false}};}
+
+test('schema 0.2 JSON applies without inventing legacy devices or CDU controls',()=>{
+  const h=harness();setupDraft(h);const record=setupAnalysis(h,'draft');h.state.jsonPending=true;
+  h.applySceneJson(JSON.stringify(record.scene));
+  assert.equal(h.isAnalysisScene(h.state.scene),true);assert.equal('devices' in h.state.scene,false);
+  assert.equal(h.element('basic-edit-fields').disabled,true);assert.equal(h.element('asset-edit-fields').disabled,true);
+  assert.equal(h.element('save-config').disabled,false);
+  h.renderBasicForm();h.renderAssetForm();
+  assert.match(h.element('config-form').innerHTML,/高级 JSON/);
+  assert.match(h.element('asset-form').innerHTML,/不写入现场/);
+  assert.doesNotMatch(h.element('config-form').innerHTML,/<input|<select/);
+});
+
+test('relationship layout supports deep ownership and finite hydraulic cycles',()=>{
+  const h=harness(),nodes=Array.from({length:120},(_,i)=>({id:'n'+i,kind:'manifold',...(i?{parent_id:'n'+(i-1)}:{})}));
+  const levels=h.relationLevels(nodes,[]);assert.equal(levels.size,120);assert.equal(levels.get('n119'),119);
+  const cycle=h.relationLevels([{id:'a'},{id:'b'},{id:'c'},{id:'island'}],[{source:'a',target:'b',kind:'fluid'},{source:'b',target:'c',kind:'fluid'},{source:'c',target:'a',kind:'fluid'}]);
+  assert.equal(cycle.size,4);assert.ok([...cycle.values()].every(Number.isFinite));assert.ok(Math.max(...cycle.values())<4);
+});
+
+test('analysis configuration hides execution actions and never exposes previous CDU telemetry',()=>{
+  const h=harness();setupRuns(h);const record=setupAnalysis(h);
+  h.state.runConfig=record;h.updateRunOptions();assert.equal(h.element('start-run').disabled,true);
+  assert.equal(h.element('start-run').hidden,true);assert.equal(h.element('run-mode').disabled,true);
+  assert.match(h.element('run-permission-note').textContent,/只读水力分析/);
+  assert.equal(h.assetRecord('CDU_A'),null);h.renderMetrics(h.state.topology);h.renderDevice();h.renderQuickPanels();
+  assert.doesNotMatch(h.element('overview-metrics').innerHTML,/9.75|1.25/);
+  assert.match(h.element('device-detail').innerHTML,/未接入实测/);
+  assert.match(h.element('topology-quick-panels').innerHTML,/尚未实现/);
+});
+
+test('analysis renders model intervals, unknown validation and no field-safety claim',()=>{
+  const h=harness();setupAnalysis(h);h.renderAnalysis();h.state.analysisResult=analysisResult();h.renderAnalysis();
+  const result=h.element('analysis-result').innerHTML;
+  assert.match(result,/模型估计/);assert.match(result,/数值收敛/);assert.match(result,/1.8 – 2.2/);
+  assert.match(result,/本任务无需辨识/);assert.match(result,/当前不具备判定条件/);
+  assert.match(result,/声明误差范围内的保守模型区间/);assert.match(result,/不能替代现场热安全验收/);
+  assert.match(result,/最高 3/);assert.doesNotMatch(result,/现场安全已验证|设备运行正常/);
+});
+
+test('numerical failure and missing interval remain explicit rather than safe estimates',()=>{
+  const h=harness();setupAnalysis(h);h.renderAnalysis();const data=analysisResult();
+  data.solver={status:'failed',reason:'iteration_limit',iterations:30,residuals:{}};
+  Object.assign(data.branches[0],{estimated_flow_kg_s:null,flow_interval_kg_s:null,status:'unknown',reason:'no_current_solution'});
+  h.state.analysisResult=data;h.renderAnalysis();const result=h.element('analysis-result').innerHTML;
+  assert.match(result,/数值求解失败/);assert.match(result,/未获得估计/);assert.match(result,/无有效区间/);assert.match(result,/无法判定/);
+  assert.doesNotMatch(result,/<svg class="analysis-interval"/);
+});
+
+test('analysis refuses response lacking model-only no-write contract',()=>{
+  const h=harness();setupAnalysis(h);h.renderAnalysis();h.state.analysisResult={...analysisResult(),hardware_writes:true};h.renderAnalysis();
+  assert.match(h.element('analysis-result').innerHTML,/缺少只读模型来源声明/);
+  assert.doesNotMatch(h.element('analysis-result').innerHTML,/branch1/);
+});
+
+test('configuration and domain changes clear previous analysis results',()=>{
+  const h=harness();setupAnalysis(h);h.renderAnalysis();h.state.analysisResult=analysisResult();h.renderAnalysis();
+  setupAnalysis(h,'published','different-config');h.renderAnalysis();assert.equal(h.state.analysisResult,null);
+  assert.doesNotMatch(h.element('analysis-result').innerHTML,/1.8 – 2.2/);
+  h.state.topologyConfig.scene.control_domains.push({id:'domain2',branch_ids:[]});h.state.analysisResult=analysisResult();
+  h.state.analysisDomainId='domain2';h.renderAnalysis();assert.equal(h.state.analysisResult,null);
+});
+
+test('only published analysis configuration can request a read-only calculation',async()=>{
+  const h=harness();setupAnalysis(h,'draft');h.renderAnalysis();assert.equal(h.element('run-analysis').disabled,true);
+  await assert.rejects(h.runHydraulicAnalysis(),/已发布/);
+});
+
+test('analysis sends only analysis API with CSRF and ignores late response after config switch',async()=>{
+  let release;const calls=[];const h=harness((url,options)=>{calls.push({url,options});return new Promise(resolve=>{release=resolve;});});
+  setupAnalysis(h);h.state.session={csrf_token:'test-csrf'};h.renderAnalysis();const pending=h.runHydraulicAnalysis();
+  assert.equal(calls.length,1);assert.equal(calls[0].url,'/api/configs/analysis-config/analysis');
+  assert.equal(calls[0].options.headers['X-LC-CSRF'],'test-csrf');assert.equal(calls[0].options.method,'POST');
+  assert.deepEqual(JSON.parse(calls[0].options.body),{domain_id:'domain1'});
+  setupAnalysis(h,'published','new-selection');h.renderAnalysis();
+  release({ok:true,json:async()=>({...analysisResult(),config_id:'analysis-config',config_revision:2})});await pending;
+  assert.equal(h.state.analysisResult,null);assert.equal(h.state.analysisLoading,false);
+  assert.doesNotMatch(h.element('analysis-result').innerHTML,/1.8 – 2.2/);
+});
+
+test('analysis rejects a response attributed to another immutable configuration',async()=>{
+  const h=harness(async()=>({ok:true,json:async()=>({...analysisResult(),config_id:'wrong-config',config_revision:2})}));setupAnalysis(h);h.renderAnalysis();
+  await h.runHydraulicAnalysis();assert.equal(h.state.analysisResult,null);
+  assert.match(h.element('analysis-result').innerHTML,/配置版本或控制域不匹配/);
+});
+
+test('forecast unsupported state clears previous data and blocks import for schema 0.2',()=>{
+  const h=harness();setupAnalysis(h);h.state.forecastConfigId='analysis-config';
+  h.state.forecastDescriptor={config_id:'analysis-config',status:'unsupported'};
+  h.state.forecastState={config_id:'analysis-config',status:'unsupported',reason:'analysis_schema_forecast_unsupported'};
+  h.element('forecast-chart').innerHTML='old fake available preview';h.renderForecast();
+  assert.equal(h.element('forecast-import').disabled,true);assert.equal(h.element('forecast-validate').disabled,true);
+  assert.equal(h.element('forecast-file').disabled,true);assert.equal(h.element('forecast-job').disabled,true);
+  assert.match(h.element('forecast-chart').innerHTML,/尚未实现支路功率预测分配/);
+  assert.doesNotMatch(h.element('forecast-chart').innerHTML,/old fake/);assert.equal(h.element('forecast-metrics').innerHTML,'');
+  assert.throws(()=>h.forecastPayload(),/不支持功率预测分配/);
+});
+
+
+test('parallel hydraulic paths remain separate without changing source and target',()=>{
+  const h=harness(),edges=[{id:'element:a',element_id:'a',source:'s',target:'r'},{id:'element:b',element_id:'b',source:'s',target:'r'},{id:'contains:asset',source:'parent',target:'child'}];
+  const before=JSON.stringify(edges),offsets=h.parallelEdgeOffsets(edges);
+  assert.notEqual(offsets.get('element:a'),offsets.get('element:b'));
+  assert.equal(offsets.get('element:a')+offsets.get('element:b'),0);
+  assert.equal(offsets.has('contains:asset'),false);assert.equal(JSON.stringify(edges),before);
 });

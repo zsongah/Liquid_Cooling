@@ -15,6 +15,7 @@ import subprocess
 import uuid
 from run_sustain_fmu import ROOT, docker_command, save, validate_experiment
 from lc_control.configuration import load_scene
+from lc_control.operations import require_runtime_scene
 
 DEFAULT_MATRIX = ROOT / 'experiments/fmu_validation_matrix.json'
 
@@ -22,7 +23,9 @@ DEFAULT_MATRIX = ROOT / 'experiments/fmu_validation_matrix.json'
 def suite(args):
     output=Path(args.output).resolve()
     if output.exists():raise ValueError('fresh_output_required')
-    scene=load_scene(args.config);matrix=json.loads(Path(args.matrix).read_text())
+    scene=load_scene(args.config)
+    require_runtime_scene(scene)
+    matrix=json.loads(Path(args.matrix).read_text())
     for c in matrix['cases']:
         if not c['id'].replace('_','').isalnum():raise ValueError('invalid_case_id')
     if len({c['id'] for c in matrix['cases']})!=len(matrix['cases']):raise ValueError('duplicate_case')

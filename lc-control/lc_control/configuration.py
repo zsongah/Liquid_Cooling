@@ -29,6 +29,11 @@ def validate_scene(scene):
             raise ValueError(reason)
 
     require(isinstance(scene, dict), "scene_mapping_required")
+    # 0.2 可以描述多设备共享液路；必须在旧版 cdu_id/设备基数检查前分派。
+    # 结构合法仅用于只读分析，执行入口另行拒绝不兼容的控制范围。
+    if scene.get("schema_version") == "0.2":
+        from .analysis_config import validate_analysis_scene
+        return validate_analysis_scene(scene)
     # 所有运行入口和工作台使用相同扩展校验，不让 UI 检查与 CLI 行为分叉。
     # 包含整个 JSON 的非有限数值检查，NaN 不能藏在画布或模型扩展字段中。
     from .site import topology_errors
@@ -116,6 +121,8 @@ def capability_report(scene):
     """生成静态能力概览。能力声明不代表现场验收，更不代表机柜安全已得到保障。"""
     from .site import inspect_scene
     inspection = inspect_scene(scene)
+    if scene.get("schema_version") == "0.2":
+        return inspection["capabilities"]
     inspected = {r["domain_id"]: r for r in inspection["capabilities"]}
     reports = []
     for domain in scene["control_domains"]:

@@ -31,6 +31,9 @@ def topology_errors(scene):
     从 from_port 到 to_port 是绘图流向，供回管应分别声明。一次、二次侧不能
     用流体连接跨越板换；板换热耦合属于 CDU 设备模型，不是跨侧水管。
     """
+    if isinstance(scene, dict) and scene.get("schema_version") == "0.2":
+        from .analysis_config import analysis_scene_errors
+        return analysis_scene_errors(scene)
     errors = []
     if not isinstance(scene, dict):
         return ["scene_mapping_required"]
@@ -434,6 +437,9 @@ def inspect_scene(scene):
     valid 表示当前软件的配置语义通过，不表示设备连通、物理参数准确或现场验收。
     所有错误字段均为稳定原因码，界面可配中文说明；不包含设备凭据和远端报文。
     """
+    if isinstance(scene, dict) and scene.get("schema_version") == "0.2":
+        from .analysis_config import inspect_analysis_scene
+        return inspect_analysis_scene(scene)
     from .configuration import validate_scene
     if not isinstance(scene, dict):
         return {"valid": False, "errors": ["scene_mapping_required"], "warnings": [],

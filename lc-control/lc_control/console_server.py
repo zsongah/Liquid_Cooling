@@ -24,7 +24,7 @@ from .site_view import site_snapshot
 
 STATIC_ROOT = Path(__file__).resolve().parent / "web"
 MAX_BODY = 2 * 1024 * 1024
-VERSION = "0.6.0"
+VERSION = "0.7.0"
 
 
 def strict_json(data):
@@ -194,7 +194,14 @@ class ConsoleHandler(BaseHTTPRequestHandler):
             self._send(202, workbench.start_job(data))
         else:
             forecast_route = re.fullmatch(r"/api/configs/([A-Za-z0-9_.-]{1,160})/forecast(?:/(descriptor|validate|clear))?", path)
+            analysis_route = re.fullmatch(r"/api/configs/([A-Za-z0-9_.-]{1,160})/analysis", path)
             site_route = re.fullmatch(r"/api/configs/([A-Za-z0-9_.-]{1,160})/site", path)
+            if analysis_route:
+                if not mutation:
+                    self._error(405, "method_not_allowed", "分析需使用带会话令牌的 POST，请求将保存独立分析报告。")
+                    return
+                self._send(200, workbench.analyze_config(analysis_route.group(1), data))
+                return
             if site_route and not mutation:
                 self._send(200, site_snapshot(workbench, site_route.group(1)))
                 return

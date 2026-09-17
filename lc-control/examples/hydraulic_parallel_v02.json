@@ -1,0 +1,80 @@
+{
+  "schema_version": "0.2",
+  "scene_id": "synthetic_parallel_racks",
+  "topology_version": "synthetic-hydraulics-1",
+  "assets": [
+    {"id": "ROOM", "kind": "room", "label": "合成机房：只读静态水力分析"},
+    {"id": "CDU_A", "kind": "cdu", "parent_id": "ROOM", "label": "CDU A 二次侧边界"},
+    {"id": "HEADER_SUPPLY", "kind": "manifold", "parent_id": "ROOM"},
+    {"id": "HEADER_RETURN", "kind": "manifold", "parent_id": "ROOM"},
+    {"id": "RACK_A", "kind": "rack", "parent_id": "ROOM"},
+    {"id": "RACK_B", "kind": "rack", "parent_id": "ROOM"},
+    {"id": "NODE_A1", "kind": "node", "parent_id": "RACK_A"},
+    {"id": "NODE_A2", "kind": "node", "parent_id": "RACK_A"},
+    {"id": "NODE_B1", "kind": "node", "parent_id": "RACK_B"},
+    {"id": "NODE_B2", "kind": "node", "parent_id": "RACK_B"},
+    {"id": "VALVE_RACK_A", "kind": "valve", "parent_id": "RACK_A"},
+    {"id": "VALVE_RACK_B", "kind": "valve", "parent_id": "RACK_B"},
+    {"id": "VALVE_NODE_A1", "kind": "valve", "parent_id": "NODE_A1"},
+    {"id": "VALVE_NODE_A2", "kind": "valve", "parent_id": "NODE_A2"},
+    {"id": "VALVE_NODE_B1", "kind": "valve", "parent_id": "NODE_B1"},
+    {"id": "VALVE_NODE_B2", "kind": "valve", "parent_id": "NODE_B2"}
+  ],
+  "devices": {},
+  "fluid_circuits": [{
+    "id": "SECONDARY",
+    "density_kg_m3": 997.0,
+    "dynamic_viscosity_pa_s": 0.00089,
+    "specific_heat_j_kg_k": 4180.0,
+    "source": "Synthetic constant-property water approximation at a declared reference state; not an OEM coolant specification",
+    "evidence_scope": "synthetic"
+  }],
+  "hydraulics": {
+    "junctions": [
+      {"id": "CDU_SUPPLY", "circuit_id": "SECONDARY", "elevation_m": 0.0, "pressure_pa": 300000.0, "pressure_uncertainty_pa": 0.0, "evidence_scope": "synthetic", "source": "Synthetic prescribed supply pressure boundary, not a device setpoint or measured value"},
+      {"id": "CDU_RETURN", "circuit_id": "SECONDARY", "elevation_m": 0.0, "pressure_pa": 200000.0, "pressure_uncertainty_pa": 0.0, "evidence_scope": "synthetic", "source": "Synthetic prescribed return pressure reference; no absolute-pressure safety claim"},
+      {"id": "HEADER_S", "circuit_id": "SECONDARY", "elevation_m": 0.0},
+      {"id": "HEADER_R", "circuit_id": "SECONDARY", "elevation_m": 0.0},
+      {"id": "RACK_A_S", "circuit_id": "SECONDARY", "elevation_m": 0.0},
+      {"id": "RACK_A_R", "circuit_id": "SECONDARY", "elevation_m": 0.0},
+      {"id": "RACK_B_S", "circuit_id": "SECONDARY", "elevation_m": 0.0},
+      {"id": "RACK_B_R", "circuit_id": "SECONDARY", "elevation_m": 0.0}
+    ],
+    "elements": [
+      {"id": "HEADER_SUPPLY_LOSS", "kind": "resistance", "from_junction": "CDU_SUPPLY", "to_junction": "HEADER_S", "asset_ref": "HEADER_SUPPLY", "parameters": {"resistance_pa_per_kg_s2": 2000.0, "linear_pa_per_kg_s": 100.0, "relative_uncertainty": 0.1}, "state": {}},
+      {"id": "HEADER_RETURN_LOSS", "kind": "resistance", "from_junction": "HEADER_R", "to_junction": "CDU_RETURN", "asset_ref": "HEADER_RETURN", "parameters": {"resistance_pa_per_kg_s2": 1000.0, "linear_pa_per_kg_s": 100.0, "relative_uncertainty": 0.1}, "state": {}},
+      {"id": "RACK_A_SUPPLY", "kind": "resistance", "from_junction": "HEADER_S", "to_junction": "RACK_A_S", "asset_ref": "VALVE_RACK_A", "parameters": {"resistance_pa_per_kg_s2": 4000.0, "linear_pa_per_kg_s": 100.0, "relative_uncertainty": 0.1}, "state": {}},
+      {"id": "RACK_A_RETURN", "kind": "resistance", "from_junction": "RACK_A_R", "to_junction": "HEADER_R", "asset_ref": "RACK_A", "parameters": {"resistance_pa_per_kg_s2": 1000.0, "linear_pa_per_kg_s": 100.0, "relative_uncertainty": 0.1}, "state": {}},
+      {"id": "NODE_A1_PATH", "kind": "resistance", "from_junction": "RACK_A_S", "to_junction": "RACK_A_R", "asset_ref": "VALVE_NODE_A1", "parameters": {"resistance_pa_per_kg_s2": 50000.0, "linear_pa_per_kg_s": 100.0, "relative_uncertainty": 0.15}, "state": {}},
+      {"id": "NODE_A2_PATH", "kind": "resistance", "from_junction": "RACK_A_S", "to_junction": "RACK_A_R", "asset_ref": "VALVE_NODE_A2", "parameters": {"resistance_pa_per_kg_s2": 65000.0, "linear_pa_per_kg_s": 100.0, "relative_uncertainty": 0.15}, "state": {}},
+      {"id": "RACK_B_SUPPLY", "kind": "resistance", "from_junction": "HEADER_S", "to_junction": "RACK_B_S", "asset_ref": "VALVE_RACK_B", "parameters": {"resistance_pa_per_kg_s2": 7000.0, "linear_pa_per_kg_s": 100.0, "relative_uncertainty": 0.1}, "state": {}},
+      {"id": "RACK_B_RETURN", "kind": "resistance", "from_junction": "RACK_B_R", "to_junction": "HEADER_R", "asset_ref": "RACK_B", "parameters": {"resistance_pa_per_kg_s2": 1000.0, "linear_pa_per_kg_s": 100.0, "relative_uncertainty": 0.1}, "state": {}},
+      {"id": "NODE_B1_PATH", "kind": "resistance", "from_junction": "RACK_B_S", "to_junction": "RACK_B_R", "asset_ref": "VALVE_NODE_B1", "parameters": {"resistance_pa_per_kg_s2": 55000.0, "linear_pa_per_kg_s": 100.0, "relative_uncertainty": 0.15}, "state": {}},
+      {"id": "NODE_B2_PATH", "kind": "resistance", "from_junction": "RACK_B_S", "to_junction": "RACK_B_R", "asset_ref": "VALVE_NODE_B2", "parameters": {"resistance_pa_per_kg_s2": 90000.0, "linear_pa_per_kg_s": 100.0, "relative_uncertainty": 0.15}, "state": {}}
+    ]
+  },
+  "branches": [
+    {"id": "BR_RACK_A", "asset_ref": "RACK_A", "flow_element_id": "RACK_A_SUPPLY", "min_flow_kg_s": 1.0, "max_flow_kg_s": 4.0, "child_branch_ids": ["BR_NODE_A1", "BR_NODE_A2"]},
+    {"id": "BR_RACK_B", "asset_ref": "RACK_B", "flow_element_id": "RACK_B_SUPPLY", "min_flow_kg_s": 1.0, "max_flow_kg_s": 4.0, "child_branch_ids": ["BR_NODE_B1", "BR_NODE_B2"]},
+    {"id": "BR_NODE_A1", "asset_ref": "NODE_A1", "flow_element_id": "NODE_A1_PATH", "min_flow_kg_s": 0.5, "max_flow_kg_s": 2.0},
+    {"id": "BR_NODE_A2", "asset_ref": "NODE_A2", "flow_element_id": "NODE_A2_PATH", "min_flow_kg_s": 0.5, "max_flow_kg_s": 2.0},
+    {"id": "BR_NODE_B1", "asset_ref": "NODE_B1", "flow_element_id": "NODE_B1_PATH", "min_flow_kg_s": 0.5, "max_flow_kg_s": 2.0},
+    {"id": "BR_NODE_B2", "asset_ref": "NODE_B2", "flow_element_id": "NODE_B2_PATH", "min_flow_kg_s": 1.0, "max_flow_kg_s": 2.0}
+  ],
+  "control_domains": [{
+    "id": "DOMAIN_SECONDARY",
+    "member_asset_ids": ["CDU_A", "HEADER_SUPPLY", "HEADER_RETURN", "RACK_A", "RACK_B", "NODE_A1", "NODE_A2", "NODE_B1", "NODE_B2", "VALVE_RACK_A", "VALVE_RACK_B", "VALVE_NODE_A1", "VALVE_NODE_A2", "VALVE_NODE_B1", "VALVE_NODE_B2"],
+    "circuit_ids": ["SECONDARY"],
+    "branch_ids": ["BR_RACK_A", "BR_RACK_B", "BR_NODE_A1", "BR_NODE_A2", "BR_NODE_B1", "BR_NODE_B2"],
+    "actuator_ids": []
+  }],
+  "points": [],
+  "actuators": [],
+  "thermal_couplings": [],
+  "extensions": {
+    "purpose": "Synthetic pressure-driven static hydraulic estimate; no hardware I/O, no controller, no real telemetry",
+    "model_boundary": "CDU pressure source is an external boundary. Rack/node valve and cold-plate paths are declared equivalent resistances at one assumed operating state; valve position control and thermal dynamics are not modelled.",
+    "accounting": "Rack flow includes its node flows. Parent and child branch flows are not summed again as site total.",
+    "parameter_evidence": "All resistances, pressure boundaries and requirements are illustrative, not OEM data or a field calibration."
+  }
+}

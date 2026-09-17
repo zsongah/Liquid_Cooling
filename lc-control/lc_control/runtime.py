@@ -19,6 +19,8 @@ from .contracts import ControlReceipt, ControlRequest
 class ControlService:
     """每个控制域一个串行网关，默认 monitor。constructor 会恢复命令日志与未决动作。"""
     def __init__(self, scene, domain_id, adapter, audit_path=None):
+        if scene.get("schema_version") != "0.1":
+            raise ValueError("analysis_only_schema_not_executable")
         self.scene = scene
         self.domain = next(d for d in scene["control_domains"] if d["id"] == domain_id)
         self.profile = scene["devices"][self.domain["cdu_id"]]

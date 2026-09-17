@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "lc-control"
-version = "0.6.0"
+version = "0.7.0"
 description = "Configurable CDU supervisory control runtime with Modbus TCP and simulation validation"
 requires-python = ">=3.9"
 dependencies = []

@@ -20,6 +20,7 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 from lc_control.configuration import finite, load_scene
 from lc_control.engine import Engine
+from lc_control.operations import require_runtime_scene
 from lc_control.report import render_report
 from lc_control.sustain_fmu import SustainFmuMaster, SustainFmuAdapter, FmuLaboratoryGate, inspect_contract
 
@@ -34,6 +35,7 @@ def save(path, data):
 
 def validate_experiment(scene):
     """校验时间网格和有界实验输入；不把实验设置描述成现场安全参数。"""
+    require_runtime_scene(scene)
     e = scene["extensions"]["sustain_fmu_experiment"]
     for key in ("warmup_s", "evaluation_s", "communication_step_s", "control_interval_s", "load_phase_s"):
         if not finite(e[key]) or e[key] <= 0:
@@ -75,6 +77,7 @@ def check_envelope(record, config):
 
 def run_worker(fmu, scene, output, variant):
     """先共同预热，再测量统一时域。动作根据当前测量产生，只作用于之后的 FMU 步。"""
+    require_runtime_scene(scene)
     output.mkdir(parents=True, exist_ok=False)
     scene = copy.deepcopy(scene)
     config = validate_experiment(scene)

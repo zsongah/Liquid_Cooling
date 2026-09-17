@@ -20,7 +20,7 @@ from pathlib import Path
 
 from .configuration import validate_scene
 from .engine import EndpointLock, Engine
-from .operations import domain_of, load_at
+from .operations import domain_of, load_at, require_runtime_scene
 
 MASK = "[REDACTED]"
 ACTIVE = {"starting", "running", "stop_requested"}
@@ -128,13 +128,16 @@ class Workbench:
         self.root = Path(project_root).resolve()
         self.state = Path(state_dir).resolve() if state_dir else self.root / "outputs" / "workbench"
         self.state.mkdir(parents=True, exist_ok=True, mode=0o700)
-        for name in ("configs", "jobs", "runs", "forecasts", "forecast_archive"):
+        for name in ("configs", "jobs", "runs", "forecasts", "forecast_archive", "analyses"):
             directory = self.state / name
             if directory.is_symlink():
                 raise WorkbenchError("unsafe_state_path")
             directory.mkdir(exist_ok=True, mode=0o700)
         self.allow_hardware_control = bool(allow_hardware_control)
         self._lock = threading.RLock()
+        # HTTP 使用多线程；离线求解与证据筛查也必须有并发预算。此锁只作
+        # 非阻塞准入，不排队等待，不持有配置仓库锁执行数值计算。
+        self._analysis_lock = threading.Lock()
         self._configs, self._jobs, self._threads, self._stops, self._runs = {}, {}, {}, {}, {}
         self._forecasts = {}
         self._forecast_ids = {}
@@ -258,8 +261,61 @@ class Workbench:
     def _published_config(self, identity):
         config = self._raw_config(identity)
         if config["status"] != "published":
-            raise WorkbenchError("published_config_required", "预测必须绑定不可变的已发布配置。", 409)
+            raise WorkbenchError("published_config_required", "此操作必须绑定不可变的已发布配置。", 409)
         return config
+
+    def analyze_config(self, config_id, payload=None):
+        """分析已发布的 0.2 快照并保存独立审计报告，绝不创建设备或运行会话。
+
+        报告绑定配置哈希和域，结果属于模型估计；它不是 runtime.sqlite 中的
+        遥测、控制回执或现场测量。浏览器只能传域 ID，不能给文件路径、阀位
+        写命令或执行模式。重算产生新的报告 ID，避免覆盖历史分析证据。
+        """
+        with self._lock:
+            if self._closed:
+                raise WorkbenchError("workbench_closed", status=503)
+            if not self._analysis_lock.acquire(blocking=False):
+                raise WorkbenchError("analysis_busy", "已有水力分析正在计算，请完成后重试；本次请求未排队。", 409)
+        try:
+            return self._analyze_config(config_id, payload)
+        finally:
+            self._analysis_lock.release()
+            self._release_state_lock_if_idle()
+
+    def _analyze_config(self, config_id, payload):
+        """仅由单分析准入保护调用；异常或关闭由外层 finally 释放计算名额。"""
+        payload = {} if payload is None else payload
+        if not isinstance(payload, dict) or set(payload) - {"domain_id"}:
+            raise WorkbenchError("invalid_analysis_request", "分析接口仅接收可选 domain_id。", 422)
+        with self._lock:
+            if self._closed:
+                raise WorkbenchError("workbench_closed", status=503)
+            config = copy.deepcopy(self._published_config(config_id))
+        scene = config["scene"]
+        if scene.get("schema_version") != "0.2":
+            raise WorkbenchError("analysis_schema_required", "水力分析仅接受 schema_version 0.2。", 422)
+        domains = scene.get("control_domains", [])
+        domain_id = payload.get("domain_id")
+        if domain_id is None:
+            if len(domains) != 1:
+                raise WorkbenchError("explicit_domain_required", "多个控制域时必须指定分析域。", 422)
+            domain_id = domains[0]["id"]
+        if not isinstance(domain_id, str) or domain_id not in {d["id"] for d in domains}:
+            raise WorkbenchError("invalid_analysis_domain", "分析域不属于该发布配置。", 422)
+        from .hydraulics import analyze_scene
+        report = analyze_scene(scene, domain_id=domain_id)
+        result = {**report, "analysis_id": "analysis-" + uuid.uuid4().hex,
+                  "config_id": config_id, "config_revision": config["revision"],
+                  "config_hash": config["scene_hash"], "created_at_unix": time.time(),
+                  "source": "model_estimate", "hardware_writes": False}
+        with self._lock:
+            if self._closed:
+                raise WorkbenchError("workbench_closed", status=503)
+            directory = self.state / "analyses"
+            if directory.is_symlink():
+                raise WorkbenchError("unsafe_state_path", status=403)
+            _atomic_json(directory / (result["analysis_id"] + ".json"), result)
+        return self._public(result)
 
     def forecast_descriptor(self, config_id):
         """公开实际配置的预测契约、可引用资产和显式合成测试模板。"""
@@ -287,6 +343,8 @@ class Workbench:
         if not isinstance(payload, dict):
             raise WorkbenchError("forecast_object_required")
         config = self._published_config(config_id)
+        if config["scene"].get("schema_version") == "0.2":
+            raise WorkbenchError("analysis_schema_forecast_unsupported", "0.2 当前仅支持水力分析，尚未接入节点功率预测与执行器分配。", 422)
         reference = self._forecast_reference(config_id, payload, payload.get("job_id"))
         if reference["clock_basis"] != payload.get("clock_basis"):
             raise WorkbenchError("forecast_clock_mismatch", "预测时间基准与所选任务不一致。")
@@ -432,6 +490,8 @@ class Workbench:
         """移除前馈输入；下周期恢复仅依靠原有观测反馈，不发送撤销或停泵命令。"""
         with self._lock:
             config = self._published_config(config_id)
+            if config["scene"].get("schema_version") == "0.2":
+                raise WorkbenchError("analysis_schema_forecast_unsupported", "0.2 尚未启用预测输入。", 422)
             record = {"config_id": config_id, "config_revision": config["revision"], "config_hash": config["scene_hash"],
                       "input": None, "input_sha256": None, "cleared_at_unix": time.time()}
             _atomic_json(self.state / "forecasts" / (config_id + ".json"), record)
@@ -443,6 +503,13 @@ class Workbench:
         from .forecasting import preview
         with self._lock:
             config = self._published_config(config_id)
+            if config["scene"].get("schema_version") == "0.2":
+                # 新配置绝不继承旧任务的使用记录，也没有隐含的仿真时钟。
+                return {"config_id": config_id, "config_revision": config["revision"],
+                        "status": "unsupported", "reason": "analysis_schema_forecast_unsupported",
+                        "input": None, "input_sha256": None, "received_at_unix": None,
+                        "reference": None, "usage": [],
+                        **preview(config["scene"], None, None, None)}
             record = copy.deepcopy(self._forecasts.get(config_id, {}))
             package = record.get("input")
             reference = self._forecast_reference(config_id, package, job_id)
@@ -727,6 +794,10 @@ class Workbench:
             if config["status"] != "published":
                 raise WorkbenchError("published_config_required", "请先发布配置，再创建运行会话。", 409)
             scene = copy.deepcopy(config["scene"])
+            try:
+                require_runtime_scene(scene)
+            except ValueError:
+                raise WorkbenchError("analysis_only_schema_not_executable", "0.2 仅支持离线分析；当前不建立设备连接，也不发送控制或心跳。", 422)
             validate_scene(scene)
             try:
                 domain = domain_of(scene, payload.get("domain_id"))
@@ -794,12 +865,15 @@ class Workbench:
     def _run_job(self, identity, scene, output, stop):
         """每线程创建、使用并关闭完整控制实例，故障退出也执行原网关交还流程。"""
         job = copy.deepcopy(self._jobs[identity])
-        domain = domain_of(scene, job["domain_id"])
-        profile = scene["devices"][domain["cdu_id"]]
         engine, error, elapsed, cycles = None, None, 0, 0
         handoff, termination = None, "completed_requested_duration"
         final_status = "completed"
         try:
+            # 二次入口保护：即便内部错误排入新版场景，也不会创建设备；
+            # 拒绝仍经统一 finally 标为失败，不能遗留永久 active 的任务。
+            require_runtime_scene(scene)
+            domain = domain_of(scene, job["domain_id"])
+            profile = scene["devices"][domain["cdu_id"]]
             with ExitStack() as stack:
                 stack.enter_context(EndpointLock(str(output.resolve())))
                 if job["kind"] == "modbus":
@@ -883,12 +957,14 @@ class Workbench:
         self._release_state_lock_if_idle()
 
     def _release_state_lock_if_idle(self):
-        """最后一个后台任务完成落盘后才释放归属；超时关闭仍保留仓库独占。
+        """后台任务和分析都完成后才释放归属；超时关闭仍保留仓库独占。
 
         close 可与任务 finally 同时调用。锁释放放在 RLock 内，保证幂等且不会
         在尚有任务写入元数据时让下一实例把它们误当成异常退出的历史任务。
+        关闭期间的分析结束后不保存新报告，由其 finally 释放最后的实例锁。
         """
         with self._lock:
-            if self._closed and self._state_lock is not None and not any(j["status"] in ACTIVE for j in self._jobs.values()):
+            if (self._closed and self._state_lock is not None and not self._analysis_lock.locked()
+                    and not any(j["status"] in ACTIVE for j in self._jobs.values())):
                 self._state_lock.__exit__(None, None, None)
                 self._state_lock = None

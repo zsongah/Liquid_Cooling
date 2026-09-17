@@ -1,11 +1,11 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="2440" height="1660" viewBox="0 0 2440 1660" role="img">
-<title>AIDC 液冷智控软件：代码、通信与 FMU 链路</title>
+<svg xmlns="http://www.w3.org/2000/svg" width="2440" height="1980" viewBox="0 0 2440 1980" role="img">
+<title>AIDC 液冷智控软件：控制通信与只读分析链路</title>
 <rect width="100%" height="100%" fill="white"/>
 <text x="55" y="40" dominant-baseline="hanging" font-family="Heiti SC, PingFang SC, Noto Sans CJK SC, sans-serif" font-size="53" font-weight="600" fill="#102F43">从工作台到 CDU：配置、预测与控制如何衔接</text>
-<text x="58" y="112" dominant-baseline="hanging" font-family="Heiti SC, PingFang SC, Noto Sans CJK SC, sans-serif" font-size="28" font-weight="400" fill="#526C7D">代码调用 → 标准数据 → 协议报文 → 设备内环；读取与目标回读沿相反方向返回</text>
-<text x="2080" y="58" dominant-baseline="hanging" font-family="Heiti SC, PingFang SC, Noto Sans CJK SC, sans-serif" font-size="22" font-weight="400" fill="#087F80">v0.6.0  /  2026.09.17</text>
+<text x="58" y="112" dominant-baseline="hanging" font-family="Heiti SC, PingFang SC, Noto Sans CJK SC, sans-serif" font-size="28" font-weight="400" fill="#526C7D">Schema 0.1：受控设备通信；Schema 0.2：独立只读分析，不进入设备执行链</text>
+<text x="2080" y="58" dominant-baseline="hanging" font-family="Heiti SC, PingFang SC, Noto Sans CJK SC, sans-serif" font-size="22" font-weight="400" fill="#087F80">v0.7.0  /  2026.09.17</text>
 <rect x="55" y="180" width="1820" height="1037" rx="16" fill="#F5F8FA" stroke="#CFDFE5" stroke-width="2"/>
-<text x="80" y="202" dominant-baseline="hanging" font-family="Heiti SC, PingFang SC, Noto Sans CJK SC, sans-serif" font-size="31" font-weight="600" fill="#102F43">边缘计算机 / 当前 Python 软件</text>
+<text x="80" y="202" dominant-baseline="hanging" font-family="Heiti SC, PingFang SC, Noto Sans CJK SC, sans-serif" font-size="31" font-weight="600" fill="#102F43">边缘计算机 / Schema 0.1 控制路径</text>
 <text x="1115" y="210" dominant-baseline="hanging" font-family="Heiti SC, PingFang SC, Noto Sans CJK SC, sans-serif" font-size="25" font-weight="400" fill="#526C7D">绿色：候选与下发     蓝色：采集与回读</text>
 <rect x="85" y="263" width="1760" height="104" rx="16" fill="white" stroke="#CFDFE5" stroke-width="2"/>
 <text x="106" y="283" dominant-baseline="hanging" font-family="Heiti SC, PingFang SC, Noto Sans CJK SC, sans-serif" font-size="25" font-weight="600" fill="#102F43">启动与输入</text>
@@ -141,5 +141,28 @@
 <polygon points="1615,1397 1601.0,1391.0 1601.0,1403.0" fill="#087F80"/>
 <polygon points="1540,1397 1554.0,1403.0 1554.0,1391.0" fill="#087F80"/>
 <text x="86" y="1471" dominant-baseline="hanging" font-family="Heiti SC, PingFang SC, Noto Sans CJK SC, sans-serif" font-size="25" font-weight="400" fill="#526C7D">实验通信步长 15 s / 控制周期 60 s；固定邻机与冷源边界。仿真网关许可不能用于现场共享水路控制。</text>
-<text x="61" y="1571" dominant-baseline="hanging" font-family="Heiti SC, PingFang SC, Noto Sans CJK SC, sans-serif" font-size="27" font-weight="400" fill="#526C7D">验证载体：合成热模型、本机 TCP、专用 FMU Master。图示为软件实现，历史实验结果需按对应版本解读。</text>
+<rect x="55" y="1560" width="2330" height="310" rx="16" fill="#EFF5FC" stroke="#B4CAE3" stroke-width="2"/>
+<text x="82" y="1585" dominant-baseline="hanging" font-family="Heiti SC, PingFang SC, Noto Sans CJK SC, sans-serif" font-size="32" font-weight="600" fill="#102F43">Schema 0.2：独立的只读工程分析路径</text>
+<text x="86" y="1638" dominant-baseline="hanging" font-family="Heiti SC, PingFang SC, Noto Sans CJK SC, sans-serif" font-size="25" font-weight="400" fill="#526C7D">高级 JSON 草稿 → 校验 / 发布 → CLI analyze 或工作台只读分析；共享域可描述，现场执行仍被门控阻止</text>
+<rect x="85" y="1684" width="700" height="140" rx="16" fill="white" stroke="#CFDFE5" stroke-width="2"/>
+<rect x="105" y="1707" width="5" height="28" rx="2" fill="#2866A4" stroke="#2866A4" stroke-width="2"/>
+<text x="125" y="1708" dominant-baseline="hanging" font-family="Heiti SC, PingFang SC, Noto Sans CJK SC, sans-serif" font-size="28" font-weight="600" fill="#102F43">analysis_config · 工程描述</text>
+<text x="109" y="1761" dominant-baseline="hanging" font-family="Heiti SC, PingFang SC, Noto Sans CJK SC, sans-serif" font-size="24" font-weight="400" fill="#526C7D">资产树 / fluid_circuits / junctions / elements</text>
+<text x="109" y="1798" dominant-baseline="hanging" font-family="Heiti SC, PingFang SC, Noto Sans CJK SC, sans-serif" font-size="24" font-weight="400" fill="#526C7D">points 引用设备点表；不复制寄存器配置</text>
+<rect x="860" y="1684" width="700" height="140" rx="16" fill="white" stroke="#CFDFE5" stroke-width="2"/>
+<rect x="880" y="1707" width="5" height="28" rx="2" fill="#2866A4" stroke="#2866A4" stroke-width="2"/>
+<text x="900" y="1708" dominant-baseline="hanging" font-family="Heiti SC, PingFang SC, Noto Sans CJK SC, sans-serif" font-size="28" font-weight="600" fill="#102F43">hydraulics + hydraulic_evidence</text>
+<text x="884" y="1761" dominant-baseline="hanging" font-family="Heiti SC, PingFang SC, Noto Sans CJK SC, sans-serif" font-size="24" font-weight="400" fill="#526C7D">静态压力与流量 / 保守误差带</text>
+<text x="884" y="1798" dominant-baseline="hanging" font-family="Heiti SC, PingFang SC, Noto Sans CJK SC, sans-serif" font-size="24" font-weight="400" fill="#526C7D">可辨识性与独立数据核对：证据不足即未知</text>
+<rect x="1635" y="1684" width="715" height="140" rx="16" fill="white" stroke="#CFDFE5" stroke-width="2"/>
+<rect x="1655" y="1707" width="5" height="28" rx="2" fill="#2866A4" stroke="#2866A4" stroke-width="2"/>
+<text x="1675" y="1708" dominant-baseline="hanging" font-family="Heiti SC, PingFang SC, Noto Sans CJK SC, sans-serif" font-size="28" font-weight="600" fill="#102F43">工作台 / analysis_report</text>
+<text x="1659" y="1761" dominant-baseline="hanging" font-family="Heiti SC, PingFang SC, Noto Sans CJK SC, sans-serif" font-size="24" font-weight="400" fill="#526C7D">机柜与节点支路流量估计 / 需求状态</text>
+<text x="1659" y="1798" dominant-baseline="hanging" font-family="Heiti SC, PingFang SC, Noto Sans CJK SC, sans-serif" font-size="24" font-weight="400" fill="#526C7D">数值收敛、需求满足、模型证据分别展示</text>
+<polyline points="785,1750 858,1750" fill="none" stroke="#2866A4" stroke-width="4" stroke-linejoin="round"/>
+<polygon points="858,1750 844.0,1744.0 844.0,1756.0" fill="#2866A4"/>
+<polyline points="1560,1750 1633,1750" fill="none" stroke="#2866A4" stroke-width="4" stroke-linejoin="round"/>
+<polygon points="1633,1750 1619.0,1744.0 1619.0,1756.0" fill="#2866A4"/>
+<text x="86" y="1839" dominant-baseline="hanging" font-family="Heiti SC, PingFang SC, Noto Sans CJK SC, sans-serif" font-size="25" font-weight="400" fill="#2866A4">该链路不创建 Adapter、不调用 ControlService、不发送设备命令；估计值不是实测支路遥测。</text>
+<text x="61" y="1922" dominant-baseline="hanging" font-family="Heiti SC, PingFang SC, Noto Sans CJK SC, sans-serif" font-size="27" font-weight="400" fill="#526C7D">图示对应当前实现。0.2 分析没有支路闭环或冷源联控；历史 FMU 实验仍按其原版本与固定边界解读。</text>
 </svg>

@@ -18,6 +18,8 @@ from .storage import Store
 class Engine:
     """单设备产品运行实例。调用者负责循环、互斥锁及最终 close；一次 tick 对应一个采集决策周期。"""
     def __init__(self, scene, domain_id, adapter, output, mode, service_factory=ControlService):
+        if scene.get("schema_version") != "0.1":
+            raise ValueError("analysis_only_schema_not_executable")
         self.scene, self.adapter = scene, adapter
         self.domain = next(d for d in scene["control_domains"] if d["id"] == domain_id)
         self.profile = scene["devices"][self.domain["cdu_id"]]

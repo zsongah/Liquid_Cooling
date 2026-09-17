@@ -208,6 +208,8 @@ class SustainFmuMaster:
 class SustainFmuAdapter:
     """把 Master 的第 1 组公开为标准 CDU 接口；owner/mode 属于实验调度器，不冒充 OEM 信号。"""
     def __init__(self, master, scene):
+        if scene.get("schema_version") != "0.1":
+            raise ValueError("analysis_only_schema_not_executable")
         if master.adapter_attached:
             raise ValueError("one_active_adapter_per_fmu_master")
         if len(scene["control_domains"]) != 1:

@@ -17,6 +17,7 @@ import uuid
 ROOT=Path(__file__).resolve().parents[1]
 sys.path.insert(0,str(ROOT))
 from lc_control.configuration import load_scene
+from lc_control.operations import require_runtime_scene
 from lc_control.sustain_fmu import SustainFmuMaster, KPA_PER_PSI, block_prefix, inspect_contract
 from run_sustain_fmu import check_envelope
 
@@ -33,6 +34,7 @@ def save(path,value):
 
 
 def worker(fmu,scene,output,variant):
+    require_runtime_scene(scene)
     output.mkdir(parents=True,exist_ok=False)
     config=copy.deepcopy(scene["extensions"]["sustain_fmu_experiment"])
     e=EXPERIMENT
@@ -89,6 +91,7 @@ def suite(args):
     if output.exists():raise ValueError('diagnostics_requires_new_output_directory')
     fmu=Path(args.fmu).resolve();source=Path(args.source).resolve() if args.source else None
     scene=load_scene(args.config)
+    require_runtime_scene(scene)
     contract=inspect_contract(fmu)
     # 只允许挂载项目内旧实验，整个 /app 保持只读。
     source_relative=source.relative_to(ROOT) if source else None

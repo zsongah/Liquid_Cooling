@@ -8,6 +8,7 @@ import threading
 import time
 import unittest
 from pathlib import Path
+from unittest.mock import patch
 
 from lc_control.console_server import ConsoleServer
 from lc_control.workbench import Workbench
@@ -188,6 +189,82 @@ class ConsoleServerTests(unittest.TestCase):
         self.assertIn(code, (400, 422))
         _, saved, _ = self.request("GET", base)
         self.assertIsNone(saved["input"])
+
+    def test_hydraulic_analysis_api_is_published_csrf_guarded_and_never_a_run(self):
+        scene = json.loads((ROOT / "examples/hydraulic_parallel_v02.json").read_text())
+        code, draft, _ = self.request("POST", "/api/configs/draft", {"name": "水力分析验收", "scene": scene})
+        self.assertEqual(code, 200, draft)
+        endpoint = "/api/configs/" + draft["id"] + "/analysis"
+        code, result, _ = self.request("POST", endpoint, {})
+        self.assertEqual(code, 409, result)
+        code, published, _ = self.request("POST", "/api/configs/%s/publish" % draft["id"], {"expected_revision": draft["revision"]})
+        self.assertEqual(code, 200, published)
+        for extra, authenticated, expected in (({}, False, 401), ({"X-LC-CSRF": "bad"}, True, 403),
+                                               ({"Origin": "https://unrelated.example"}, True, 403)):
+            code, _, _ = self.request("POST", endpoint, {}, extra=extra, authenticated=authenticated)
+            self.assertEqual(code, expected)
+        self.assertEqual(list((self.manager.state / "analyses").iterdir()), [])
+        code, _, _ = self.request("GET", endpoint)
+        self.assertEqual(code, 405)
+        with patch("lc_control.registry.create_adapter") as factory, patch("lc_control.workbench.Engine") as engine:
+            code, report, _ = self.request("POST", endpoint, {"domain_id": scene["control_domains"][0]["id"]})
+            self.assertEqual(code, 200, report)
+            for mode in ("monitor", "shadow", "control"):
+                code, rejected, _ = self.request("POST", "/api/jobs", {"config_id": published["id"], "mode": mode})
+                self.assertEqual(code, 422, rejected)
+                self.assertEqual(rejected["error"]["code"], "analysis_only_schema_not_executable")
+        factory.assert_not_called()
+        engine.assert_not_called()
+        self.assertEqual(report["source"], "model_estimate")
+        self.assertFalse(report["hardware_writes"])
+        self.assertEqual(report["config_hash"], published["scene_hash"])
+        self.assertTrue((self.manager.state / "analyses" / (report["analysis_id"] + ".json")).is_file())
+        self.assertEqual(self.manager.list_jobs(), [])
+        self.assertEqual(list((self.manager.state / "runs").iterdir()), [])
+        base = "/api/configs/" + published["id"]
+        code, site, _ = self.request("GET", base + "/site")
+        self.assertEqual(code, 200, site)
+        self.assertEqual(site["telemetry_by_asset"], {})
+        for suffix in ("/forecast", "/forecast/descriptor"):
+            code, result, _ = self.request("GET", base + suffix)
+            self.assertEqual(code, 200, result)
+            self.assertEqual(result["status"], "unsupported")
+        code, result, _ = self.request("POST", base + "/forecast", {})
+        self.assertEqual(code, 422, result)
+        self.assertEqual(result["error"]["code"], "analysis_schema_forecast_unsupported")
+
+    def test_overlapping_http_analyses_return_busy_without_queueing(self):
+        from lc_control.hydraulics import analyze_scene
+        scene = json.loads((ROOT / "examples/hydraulic_parallel_v02.json").read_text())
+        _, draft, _ = self.request("POST", "/api/configs/draft", {"name": "并发分析", "scene": scene})
+        _, config, _ = self.request("POST", "/api/configs/%s/publish" % draft["id"], {"expected_revision": draft["revision"]})
+        endpoint = "/api/configs/" + config["id"] + "/analysis"
+        entered, release = threading.Event(), threading.Event()
+        first = []
+
+        def held_solver(*args, **kwargs):
+            entered.set()
+            if not release.wait(4):
+                raise RuntimeError("test_solver_release_timeout")
+            return analyze_scene(*args, **kwargs)
+
+        with patch("lc_control.hydraulics.analyze_scene", side_effect=held_solver) as solve:
+            thread = threading.Thread(target=lambda: first.append(self.request("POST", endpoint, {})))
+            thread.start()
+            try:
+                self.assertTrue(entered.wait(2))
+                code, body, _ = self.request("POST", endpoint, {})
+                self.assertEqual(code, 409, body)
+                self.assertEqual(body["error"]["code"], "analysis_busy")
+                self.assertEqual(solve.call_count, 1)
+                self.assertFalse(release.is_set())
+                # 普通查询保持响应；数值任务没有持有全局仓库锁。
+                self.assertEqual(self.request("GET", "/api/jobs")[0], 200)
+            finally:
+                release.set()
+                thread.join(5)
+        self.assertEqual(first[0][0], 200, first)
+        self.assertEqual(len(list((self.manager.state / "analyses").iterdir())), 1)
 
 
 if __name__ == "__main__":

@@ -49,6 +49,15 @@ def _topology(scene):
 
 def descriptor(scene, config_id, revision):
     """契约与模板来自当前发布场景；模板明确 synthetic，未提交前不会被使用。"""
+    if scene.get("schema_version") == "0.2":
+        return {"schema_version": "1", "scene_schema_version": "0.2",
+                "config_id": config_id, "config_revision": revision,
+                "status": "unsupported", "reason": "analysis_schema_forecast_unsupported",
+                "hardware_writes": False, "unit": "W_e", "clock_bases": [],
+                "assets": [], "domains": [{"id": d["id"], "status": "unsupported"}
+                                           for d in scene.get("control_domains", [])],
+                "example": None, "limits": {},
+                "notes": ["0.2 当前仅支持离线水力分析，尚未接入节点功率预测或支路冷量分配。"]}
     assets, parents, children, owners = _topology(scene)
     supported = [{"id": a["id"], "kind": a["kind"], "label": a.get("label", a["id"]),
                   "parent_id": a.get("parent_id"), "rack_id": parents.get(a["id"], a["id"])}
@@ -82,6 +91,7 @@ def descriptor(scene, config_id, revision):
 
 def validate_input(scene, payload, now):
     """验证输入和时效，返回只包含契约字段的副本；失败不替换此前有效输入。"""
+    _require(scene.get("schema_version") != "0.2", "analysis_schema_forecast_unsupported")
     _require(isinstance(payload, dict), "forecast_object_required")
     allowed = {"forecast_id", "source", "clock_basis", "issued_at", "valid_from", "valid_until", "max_age_s", "unit", "selection", "entries", "job_id"}
     _require(not set(payload) - allowed, "unknown_forecast_field")
@@ -165,6 +175,10 @@ def resolve_domain(scene, domain_id, package, now, clock_basis):
     派生包 issued_at=now 是本次物化时间，并保留 source_issued_at。它不是原始预报
     更新时间；只有原始发行时间/有效期/最大年龄都通过，才生成这份内部即时包。
     """
+    if scene.get("schema_version") == "0.2":
+        return None, {"domain_id": domain_id, "clock_basis": None, "now": None,
+                      "status": "unsupported", "reason": "analysis_schema_forecast_unsupported",
+                      "forecast_id": None, "peak_liquid_w": None, "series": [], "racks": []}
     domain = next(d for d in scene["control_domains"] if d["id"] == domain_id)
     policy = scene["devices"][domain["cdu_id"]].get("policy")
     result = {"domain_id": domain_id, "clock_basis": clock_basis, "now": now,
@@ -225,6 +239,13 @@ def resolve_domain(scene, domain_id, package, now, clock_basis):
 
 def preview(scene, package, now, clock_basis):
     """机房汇总只合并可用、互斥域的同时刻值，绝不把各域峰值直接相加。"""
+    if scene.get("schema_version") == "0.2":
+        return {"status": "unsupported", "reason": "analysis_schema_forecast_unsupported",
+                "domains": [resolve_domain(scene, d["id"], None, None, None)[1]
+                            for d in scene.get("control_domains", [])],
+                "site": {"status": "unsupported", "included_domains": [],
+                         "excluded_domains": [d["id"] for d in scene.get("control_domains", [])],
+                         "series": [], "peak_liquid_w": None, "scope": "analysis_only_no_forecast_allocation"}}
     domains = [resolve_domain(scene, d["id"], package, now, clock_basis)[1] for d in scene["control_domains"]]
     ready = [d for d in domains if d["status"] == "ready"]
     site = {"status": "complete" if len(ready) == len(domains) and ready else "partial" if ready else "unavailable",

@@ -38,15 +38,16 @@ def main():
         '<small>' + number + '</small><h2>' + title + '</h2><p>' + detail + '</p></a>'
         for number, title, detail, section in chapters)
     results = [
+        ("v0.7.0 · 多支路只读水力分析与证据报告", "outputs/hydraulic-analysis/index.html"),
         ("向上级汇报 · CDU 场景、控制链与选定结果", "outputs/cdu-briefing-20260916/index.html"),
         ("FMU 统一验证报告 · 29 组实验与核心配置", "outputs/fmu-validation-20260915/index.html"),
         ("合成液对液仿真", "outputs/no-hardware-l2l-20260914/report.html"),
         ("合成液对气仿真", "outputs/no-hardware-l2a-20260914/report.html"),
         ("本机 TCP 通信报告", "outputs/wire-demo/report.html"),
-        ("最新收尾回归 · v0.6.0 / 2026-09-17", "outputs/test-results-release-closure-20260917.txt"),
+        ("历史收尾回归 · v0.6.0 / 2026-09-17", "outputs/test-results-release-closure-20260917.txt"),
         ("前端交互回归 · JSON 编辑与历史记录隔离", "outputs/test-results-frontend-closure-20260917.txt"),
         ("预测、拓扑与控制核心回归 · 2026-09-16", "outputs/test-results-console-v060-20260916.txt"),
-        ("新版界面与后台闭环验收 · v0.6.0", "outputs/console-v060-acceptance-20260916/verification.json"),
+        ("历史界面与后台闭环验收 · v0.6.0", "outputs/console-v060-acceptance-20260916/verification.json"),
         ("历史工作台回归测试 · v0.5.0", "outputs/test-results-workbench-20260916.txt"),
         ("历史 FMU 跟踪修正测试 · v0.4.1", "outputs/test-results-tracking-correction.txt"),
     ]
@@ -74,15 +75,19 @@ main{padding:32px 20px}h1{font-size:34px}}@media(max-width:520px){.grid{grid-tem
 ul{columns:1}.card{padding:18px}h1{font-size:30px}}
 </style></head><body><main><header><div class="brand">LC CONTROL / v__VERSION__</div>
 <h1>AIDC 液冷智控软件</h1><p>一份手册，了解产品、配置、算法、设备接入与开发验证。
+Schema 0.1 运行单 CDU 控制；Schema 0.2 新增多支路只读水力分析。
 完整内容集中维护，以下入口直接定位对应章节。</p>
 <a class="primary" href="__MANUAL__">打开完整使用手册</a>
 <a class="primary" href="docs/实施框架与通信链路.html">查看实施框架双图</a><a href="README.md">快速启动</a>
 </header><section style="margin-bottom:24px"><h2>边缘工作台 · 实际交互界面</h2>
 <p>在 lc-control 目录运行 <code>python3 -m lc_control serve</code>，然后打开本机工作台。
-可查看物理连接、读取真实运行记录、编辑并发布配置、启动合成仿真。
+可查看配置、读取已保存运行记录、编辑并发布配置。Schema 0.1 可启动合成仿真；
+Schema 0.2 可运行压力与阻力驱动的静态分析，输出估计流量与需求核对，不写设备。
 本页是离线文档入口；工作台连接后台服务后才显示运行数据。</p>
 <a class="primary" href="http://127.0.0.1:8765">打开本机工作台</a>
-<p>推荐从 workbench_physical 或 workbench_independent_cdus 模板开始。FMU 历史记录可查询，新实验仍由专用 Master 启动。</p>
+<p>只读分析从 <code>hydraulic_parallel_v02</code> 模板开始；原控制与仿真使用
+<code>workbench_physical</code> 或 <code>workbench_independent_cdus</code>。
+FMU 历史记录可查询，新实验仍由专用 Master 启动。</p>
 </section><div class="grid">__CARDS__</div><section><h2>已保存的验证报告</h2>
 <p>以下均为开发实验。结果口径、已知限制及现场验收缺口见手册第 10 节；页面不显示设备实时状态。为保持仓库轻量，<code>outputs/</code> 不入库：本地产物存在时才显示链接，否则标注“未随仓库发布 · 需本地生成”。</p>
 <ul>__EVIDENCE__</ul></section><footer>软件版本来自 pyproject.toml。

@@ -2,6 +2,7 @@
 
 图形由相同坐标/文字同时绘制为矢量和位图，避免中文文字生成错误。
 仅图形构建需要 Pillow 和中文字体；不增加控制软件的运行依赖。
+0.1 控制与 0.2 只读分析使用独立图带，禁止把估计的支路流量画成可执行控制。
 变更工作台、预测接入、Engine / Adapter / 网关行为时，同步更新图中文字并重新生成。
 """
 import html
@@ -87,9 +88,9 @@ class Diagram:
 
 
 def overview():
-    d = Diagram(1800, 1350, "AIDC 液冷智控软件：当前实施框架")
+    d = Diagram(1800, 1580, "AIDC 液冷智控软件：当前实施框架")
     d.text(55, 38, "AIDC 液冷智控软件", 53, bold=True)
-    d.text(58, 108, "当前实施框架  /  配置驱动 · 多独立 CDU 域 · 受控设备接口", 27, MUTED)
+    d.text(58, 108, "当前实施框架  /  配置驱动 · 单 CDU 执行 · 多支路只读水力分析", 27, MUTED)
     d.text(1445, 55, "v"+VERSION+"  /  "+REVIEWED.replace('-', '.'), 22, TEAL)
 
     d.box(55, 172, 1190, 152, SKY)
@@ -103,7 +104,7 @@ def overview():
     d.text(675, 335, "配置 / 需求", 22, TEAL)
 
     d.box(55, 385, 1190, 433, SEA, "#9CCFC9")
-    d.text(81, 412, "本机工作台与边缘执行核心", 33, bold=True)
+    d.text(81, 412, "Schema 0.1 · 边缘控制核心", 33, bold=True)
     d.text(848, 423, "Web / CLI → Engine", 25, TEAL)
     cards = [
         (80, 478, "配置与工作台", ["草稿 / 发布 / 拓扑界面", "运行趋势 / 决策回放"]),
@@ -132,30 +133,39 @@ def overview():
     d.text(1318,250,"规划能力 · 尚未实现",25,AMBER)
     future = [
         ("系统总能耗优化",["CDU 与冷源联合目标", "设备组合 / 负荷分配"]),
-        ("多 CDU 与环境协调",["共享水路统一调度", "供温 / 冷源模式寻优"]),
+        ("多 CDU 与环境协调",["共享水路统一调度", "支路阀分配 / 冷源协调"]),
         ("更完整模型与诊断",["机柜 / 芯片热模型", "泄漏预测 / 冷却液健康"]),
         ("接口与产品化运维",["BMS / iCooling · 多协议", "多人权限 / 留存 / 恢复"]),
     ]
     for i,(title,values) in enumerate(future):
         d.card(1313,306+i*180,408,160,title,values,accent=AMBER,title_size=28)
 
-    d.box(55,1104,1690,139,LIGHT)
-    d.text(80,1127,"当前可用的验证载体",28,bold=True)
-    d.text(80,1184,"合成热模型",26,TEAL)
-    d.text(365,1184,"本机 Modbus TCP 模拟器",26,TEAL)
-    d.text(883,1184,"Sustain-LC 实际 FMU 闭环",26,TEAL)
-    d.text(80,1273,"每域一台 CDU；共享水路需协调器。自动策略保持供温；尚无实机验收或全站节能证明。",25,MUTED)
+    d.box(55,1104,1690,232,SKY,"#B4CAE3")
+    d.text(80,1126,"Schema 0.2 · 只读静态水力分析",30,bold=True)
+    d.text(880,1131,"结构合法 ≠ 分析就绪 ≠ 现场可执行",25,BLUE)
+    d.card(80,1174,510,140,"拓扑与工程证据",["资产树 / 液路 / 点表引用分离", "明确物性、压力边界与阻力"],accent=BLUE,title_size=27,body_size=23)
+    d.card(646,1174,510,140,"静态水力与可信度",["压力驱动求流 / 误差区间", "参数辨识检查 / 留出核对"],accent=BLUE,title_size=27,body_size=23)
+    d.card(1212,1174,510,140,"支路需求核对",["估计流量 / 满足、违反或未知", "不创建控制任务 / 不写设备"],accent=BLUE,title_size=27,body_size=23)
+    d.arrow([(591,1244),(644,1244)],BLUE)
+    d.arrow([(1157,1244),(1210,1244)],BLUE)
+    d.box(55,1370,1690,123,LIGHT)
+    d.text(80,1391,"开发验证载体与证据范围",28,bold=True)
+    d.text(80,1446,"静态水力合成验算",25,TEAL)
+    d.text(454,1446,"聚合热模型",25,TEAL)
+    d.text(791,1446,"本机 Modbus TCP",25,TEAL)
+    d.text(1234,1446,"Sustain-LC FMU 闭环",25,TEAL)
+    d.text(80,1524,"0.1 每域控制一台 CDU；0.2 可描述共享域，只做分析。尚无实机验收或全站节能证明。",25,MUTED)
     d.save("aidc-implementation-overview")
 
 
 def detail():
-    d = Diagram(2440, 1660, "AIDC 液冷智控软件：代码、通信与 FMU 链路")
+    d = Diagram(2440, 1980, "AIDC 液冷智控软件：控制通信与只读分析链路")
     d.text(55,40,"从工作台到 CDU：配置、预测与控制如何衔接",53,bold=True)
-    d.text(58,112,"代码调用 → 标准数据 → 协议报文 → 设备内环；读取与目标回读沿相反方向返回",28,MUTED)
+    d.text(58,112,"Schema 0.1：受控设备通信；Schema 0.2：独立只读分析，不进入设备执行链",28,MUTED)
     d.text(2080,58,"v"+VERSION+"  /  "+REVIEWED.replace('-', '.'),22,TEAL)
 
     d.box(55,180,1820,1037,LIGHT)
-    d.text(80,202,"边缘计算机 / 当前 Python 软件",31,bold=True)
+    d.text(80,202,"边缘计算机 / Schema 0.1 控制路径",31,bold=True)
     d.text(1115,210,"绿色：候选与下发     蓝色：采集与回读",25,MUTED)
 
     d.box(85,263,1760,104,"white")
@@ -265,7 +275,20 @@ def detail():
     for x1,x2 in [(545,620),(1035,1110),(1540,1615)]:
         d.arrow([(x1,1397),(x2,1397)],double=True)
     d.text(86,1471,"实验通信步长 15 s / 控制周期 60 s；固定邻机与冷源边界。仿真网关许可不能用于现场共享水路控制。",25,MUTED)
-    d.text(61,1571,"验证载体：合成热模型、本机 TCP、专用 FMU Master。图示为软件实现，历史实验结果需按对应版本解读。",27,MUTED)
+    d.box(55,1560,2330,310,SKY,"#B4CAE3")
+    d.text(82,1585,"Schema 0.2：独立的只读工程分析路径",32,bold=True)
+    d.text(86,1638,"高级 JSON 草稿 → 校验 / 发布 → CLI analyze 或工作台只读分析；共享域可描述，现场执行仍被门控阻止",25,MUTED)
+    analysis_stages = [
+        (85,700,"analysis_config · 工程描述",["资产树 / fluid_circuits / junctions / elements", "points 引用设备点表；不复制寄存器配置"]),
+        (860,700,"hydraulics + hydraulic_evidence",["静态压力与流量 / 保守误差带", "可辨识性与独立数据核对：证据不足即未知"]),
+        (1635,715,"工作台 / analysis_report",["机柜与节点支路流量估计 / 需求状态", "数值收敛、需求满足、模型证据分别展示"]),
+    ]
+    for x,w,title,values in analysis_stages:
+        d.card(x,1684,w,140,title,values,accent=BLUE,title_size=28,body_size=24)
+    d.arrow([(785,1750),(858,1750)],BLUE)
+    d.arrow([(1560,1750),(1633,1750)],BLUE)
+    d.text(86,1839,"该链路不创建 Adapter、不调用 ControlService、不发送设备命令；估计值不是实测支路遥测。",25,BLUE)
+    d.text(61,1922,"图示对应当前实现。0.2 分析没有支路闭环或冷源联控；历史 FMU 实验仍按其原版本与固定边界解读。",27,MUTED)
     d.save("aidc-control-dataflow")
 
 
@@ -282,18 +305,21 @@ img{display:block;width:100%;height:auto;margin-top:20px;border:1px solid #cfdfE
 .links{display:flex;gap:24px}footer{font-size:13px;color:#526c7d} @media print{header,.links{display:none}
 section{page-break-after:always;margin:0;padding:0}img{border:0} @page{size:A3 landscape;margin:10mm}}
 </style></head><body><header><h1>AIDC 液冷智控：当前实施框架与通信链路</h1>
-<p>软件 v__VERSION__ · 核对日期 __REVIEWED__。图示覆盖本机工作台、配置发布、多独立控制域与功率预测前馈。</p>
-<p>界面通过同源 HTTP 查询记录和管理任务；Engine 调用设备适配器与命令网关。各域独立运行，尚无共享水路调度、支路阀分配或全站能耗优化。</p>
+<p>软件 v__VERSION__ · 核对日期 __REVIEWED__。图示覆盖本机工作台、Schema 0.1 控制路径与新增 Schema 0.2 只读水力分析。</p>
+<p>Schema 0.1 由 Engine 调用设备适配器与命令网关，支持独立 CDU 域和功率预测前馈。
+Schema 0.2 按显式液路、物性、压力和阻力估计支路流量，检查误差范围、需求与模型证据，不创建适配器或发送设备命令。
+共享水路调度、支路阀闭环分配和全站能耗优化仍未实现。</p>
 <p>预测接入与使用契约见完整手册第 8.4 节；当前实现边界见第 13.1 节。Sustain FMU 新实验仍走专用 Master，不由工作台启动。</p>
 <nav><a href="#overview">图 1 · 整体框架</a><a href="#detail">图 2 · 通信与代码</a>
-<a href="边缘液冷智控产品审查与使用手册.html">完整使用手册</a></nav></header>
+<a href="边缘液冷智控产品审查与使用手册.html">完整使用手册</a>
+<a href="../outputs/hydraulic-analysis/index.html">只读水力分析报告</a></nav></header>
 __SECTIONS__</body></html>'''
     sections=[]
     for key,stem,title,note in [
         ("overview","aidc-implementation-overview","图 1 · 产品当前实施框架",
-         "区分上游输入、边缘软件、CDU 本地职责、已用验证载体与后续扩展。"),
+         "区分上游输入、0.1 边缘控制、CDU 本地职责、0.2 只读水力分析与后续扩展。"),
         ("detail","aidc-control-dataflow","图 2 · 工作台、Engine、Adapter、网口与 CDU 的信息链路",
-         "绿色表示候选与下发，蓝色表示采集与回读。FMU 是另一种载体，不使用现场 Modbus 网络。")]:
+         "上半部分是 0.1 控制与通信，蓝色回路表示采集和回读；底部独立蓝色带是 0.2 只读分析。FMU 使用专用实验入口。")]:
         sections.append(f'<section id="{key}"><h2>{title}</h2><p>{note}</p>'
                         f'<div class="links"><a href="assets/{stem}.png" download>下载 PNG 图片</a>'
                         f'<a href="assets/{stem}.svg" target="_blank">打开 SVG 矢量图 / 放大</a></div>'

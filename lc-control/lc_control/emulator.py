@@ -14,6 +14,8 @@ from .plant import ThermalPlant
 class Emulator:
     """合成设备服务及独立物理/看门狗线程，供协议集成测试使用。"""
     def __init__(self, scene, port=None):
+        if scene.get("schema_version") != "0.1":
+            raise ValueError("analysis_only_schema_not_executable")
         domain = scene["control_domains"][0]
         self.profile = scene["devices"][domain["cdu_id"]]
         self.plant = ThermalPlant(domain["cdu_id"], self.profile, domain["owner"])

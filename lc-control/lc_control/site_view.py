@@ -14,6 +14,27 @@ def site_snapshot(workbench, config_id):
     """按域选择活动任务，否则选择最近任务；只组合相同配置版本的记录。"""
     config = workbench.get_config(config_id)
     validation = config.get("validation", {})
+    if config["scene"].get("schema_version") == "0.2":
+        # 分析域不等同于旧版单 CDU 运行域，即使配置/域标签相似也绝不串用
+        # 历史任务或测量。模型估计只能从独立 analysis 接口获得。
+        domains = [{"domain_id": d["id"], "member_asset_ids": d.get("member_asset_ids", []),
+                    "circuit_ids": d.get("circuit_ids", []), "branch_ids": d.get("branch_ids", []),
+                    "actuator_ids": d.get("actuator_ids", []), "cdu_id": None,
+                    "status": "analysis_only", "source": "configuration_only",
+                    "mode": "analysis_only", "active": False, "control_active": False,
+                    "selected_run_id": None, "clock_basis": None,
+                    "latest_telemetry": None, "latest_decision": None, "latest_fault": None,
+                    "freshness_status": "not_sampled", "measurement_timestamp": None,
+                    "sample_age_s": None, "handoff_confirmed": None}
+                   for d in config["scene"].get("control_domains", [])]
+        return {"config_id": config_id, "config_revision": config["revision"],
+                "schema_version": "0.2", "scene_id": config["scene"].get("scene_id"),
+                "source": "configuration_only", "hardware_writes": False,
+                "topology": validation.get("topology"), "domains": domains,
+                "telemetry_by_asset": {}, "site_power_w": None,
+                "coverage": {"configured_domains": len(domains), "observed_domains": 0, "active_domains": 0},
+                "scope": "analysis_only", "analysis_ready": validation.get("analysis_ready", False),
+                "aggregation_note": "仅展示 0.2 物理配置；无设备连接、实测遥测或已执行动作。水力分析结果另行标记为模型估计。"}
     jobs = [j for j in workbench.list_jobs() if j.get("config_id") == config_id]
     domains, telemetry = [], {}
     for domain in config["scene"].get("control_domains", []):

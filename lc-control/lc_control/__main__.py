@@ -1,10 +1,11 @@
-"""命令行入口：validate / demo / simulate / run / emulator / report / serve。
+"""命令行入口：validate / analyze / migrate / demo / simulate / run / emulator / report / serve。
 
 解析参数后先校验配置，再选择运行流程；不会自动探测或抢占设备控制权。
 run 故障返回非零状态，便于外部进程管理器识别失败；SIGTERM 进入退出流程。"""
 import argparse
 from dataclasses import asdict
 import json
+from pathlib import Path
 
 from .adapters import MockCDUAdapter
 from .configuration import capability_report, load_scene
@@ -15,10 +16,10 @@ from .runtime import ControlService
 def main():
     """解析命令行参数、校验配置、调用对应流程，并输出结果。默认设备模式为 monitor。"""
     parser = argparse.ArgumentParser(description="Configurable CDU control runtime")
-    parser.add_argument("action", choices=("validate", "demo", "simulate", "run", "emulator", "report", "serve"))
+    parser.add_argument("action", choices=("validate", "analyze", "migrate", "demo", "simulate", "run", "emulator", "report", "serve"))
     parser.add_argument("scene", nargs="?")
     parser.add_argument("--audit", default=None)
-    parser.add_argument("--output", default="outputs/latest")
+    parser.add_argument("--output", help="analyze/migrate: JSON 输出文件（省略时仅 stdout）；其他运行命令: 输出目录，默认 outputs/latest")
     parser.add_argument("--mode", choices=("monitor", "shadow", "control"), default="monitor")
     parser.add_argument("--steps", type=int, default=12, help="0 means continuous")
     parser.add_argument("--seconds", type=float, default=1800)
@@ -35,7 +36,6 @@ def main():
     if not math.isfinite(args.interval) or args.interval <= 0 or args.steps < 0 or not math.isfinite(args.seconds) or args.seconds <= 0:
         parser.error("interval/seconds must be positive and finite; steps >= 0")
     if args.action == "serve":
-        from pathlib import Path
         from .console_server import serve
         root = Path(args.project_root).resolve() if args.project_root else Path(__file__).resolve().parents[1]
         serve(root, host=args.host, port=args.port, state_dir=args.state_dir,
@@ -43,17 +43,55 @@ def main():
         return
     if args.action == "report":
         from .report import render_report
-        print(render_report(args.output).resolve())
+        print(render_report(args.output or "outputs/latest").resolve())
         return
     if not args.scene:
         parser.error("scene is required")
     scene = load_scene(args.scene)
+    if args.action == "migrate":
+        if scene.get("schema_version") != "0.1":
+            parser.error("migration_requires_legacy_schema: migrate requires schema_version 0.1")
+        from .analysis_config import migrate_legacy_scene
+        migrated = migrate_legacy_scene(scene)
+        # 文件仅包含新场景，可直接传给 validate/analyze；迁移缺口作为独立
+        # stdout 报告输出。缺失管径、阻力和压力边界不会用示例默认值补齐。
+        if args.output:
+            destination = Path(args.output)
+            destination.parent.mkdir(parents=True, exist_ok=True)
+            destination.write_text(json.dumps(migrated["scene"], ensure_ascii=False, indent=2, allow_nan=False) + "\n", encoding="utf-8")
+            print(json.dumps(migrated["migration"], ensure_ascii=False, indent=2, allow_nan=False))
+        else:
+            print(json.dumps(migrated, ensure_ascii=False, indent=2, allow_nan=False))
+        return
+    if args.action == "analyze":
+        if scene.get("schema_version") != "0.2":
+            parser.error("analysis_schema_required: analyze requires schema_version 0.2")
+        from .hydraulics import analyze_scene
+        result = analyze_scene(scene, domain_id=args.domain)
+        rendered = json.dumps(result, ensure_ascii=False, indent=2, allow_nan=False)
+        if args.output:
+            destination = Path(args.output)
+            destination.parent.mkdir(parents=True, exist_ok=True)
+            destination.write_text(rendered + "\n", encoding="utf-8")
+        print(rendered)
+        return
+    if args.action == "validate" and scene.get("schema_version") == "0.2":
+        from .site import inspect_scene
+        print(json.dumps(inspect_scene(scene), ensure_ascii=False, indent=2, allow_nan=False))
+        return
+    if args.action != "validate":
+        from .operations import require_runtime_scene
+        try:
+            require_runtime_scene(scene)
+        except ValueError as error:
+            parser.error(str(error) + ": use analyze for schema_version 0.2")
+    output_directory = args.output or "outputs/latest"
     if args.action in ("simulate", "run", "emulator"):
         from .operations import compare, run
         if args.action == "simulate":
-            result = compare(scene, args.output, args.seconds, args.interval)
+            result = compare(scene, output_directory, args.seconds, args.interval)
         elif args.action == "run":
-            result = run(scene, args.output, args.mode, args.steps, args.interval, args.domain, args.forecast_file)
+            result = run(scene, output_directory, args.mode, args.steps, args.interval, args.domain, args.forecast_file)
         else:
             import time
             from .emulator import Emulator
